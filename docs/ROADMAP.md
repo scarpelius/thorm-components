@@ -19,7 +19,7 @@ This roadmap provides a step-by-step implementation plan for adding editing capa
 
 Before any implementation, complete:
 
-- [ ] Read and understand the full THORM_EDITOR_ARCHITECTURE_SPEC.md
+- [x] Read and understand the full THORM_EDITOR_ARCHITECTURE_SPEC.md
 - [ ] Review current thorm-components source code structure
 - [ ] Examine existing Thorm IR node types and mounting behavior
 - [ ] Understand the current page rendering pipeline
