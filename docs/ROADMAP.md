@@ -1,4 +1,8 @@
 # Thorm Editor — Implementation Roadmap
+**Branch:** `phase0-task1-study_architecture_specification`  
+**Status:** Phase 0, Task 1 Complete - Comprehensive understanding documented  
+**Commit:** 582049b  
+**PR:** https://github.com/scarpelius/thorm-components/pull/3
 
 **Based on:** THORM_EDITOR_ARCHITECTURE_SPEC.md v1.1  
 **Date:** 2026-10-26  
@@ -19,7 +23,7 @@ This roadmap provides a step-by-step implementation plan for adding editing capa
 
 Before any implementation, complete:
 
-- [ ] Read and understand the full THORM_EDITOR_ARCHITECTURE_SPEC.md
+- [x] Read and understand the full THORM_EDITOR_ARCHITECTURE_SPEC.md
 - [ ] Review current thorm-components source code structure
 - [ ] Examine existing Thorm IR node types and mounting behavior
 - [ ] Understand the current page rendering pipeline
