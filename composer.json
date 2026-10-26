@@ -1,0 +1,11 @@
+{
+    "name": "bitforge/thorm-app",
+    "description": "Application skeleton for Thorm",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "bitforge/thorm": "^0.1@alpha"
+    },
+    "minimum-stability": "alpha",
+    "prefer-stable": true
+}
