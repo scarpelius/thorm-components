@@ -1,0 +1,1 @@
+- before every commit, pus and PR creation read docs/WORKFLOW.md
