@@ -6,6 +6,15 @@
     "require": {
         "bitforge/thorm": "^0.1@alpha"
     },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Thorm\\Components\\Editor\\": "editor/src/php/",
+            "Thorm\\Components\\Editor\\Examples\\": "examples/editor/"
+        }
+    },
     "minimum-stability": "alpha",
     "prefer-stable": true
 }
