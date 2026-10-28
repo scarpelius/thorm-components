@@ -14,11 +14,21 @@ class ComposerStaticInit89f13032f1477694ce1d377b26edaa46
     public static $prefixLengthsPsr4 = array (
         'T' =>
         array (
+            'Thorm\\Components\\Editor\\Examples\\' => 33,
+            'Thorm\\Components\\Editor\\' => 24,
             'Thorm\\' => 6,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
+        'Thorm\\Components\\Editor\\Examples\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/examples/editor',
+        ),
+        'Thorm\\Components\\Editor\\' =>
+        array (
+            0 => __DIR__ . '/../..' . '/editor/src/php',
+        ),
         'Thorm\\' =>
         array (
             0 => __DIR__ . '/..' . '/bitforge/thorm/src/php',

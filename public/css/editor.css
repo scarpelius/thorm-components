@@ -1,0 +1,18 @@
+/* Thorm Editor — A1: Visible Host (Inert Editor Area) */
+.thorm-editor-host {
+    border: 2px dashed #666;
+    padding: 16px;
+    margin: 16px 0;
+    background: #fafafa;
+}
+
+.thorm-editor-label {
+    background: #666;
+    color: white;
+    padding: 4px 8px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 12px;
+}
