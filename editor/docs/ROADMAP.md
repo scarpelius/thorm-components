@@ -55,11 +55,11 @@ Before any implementation, complete:
 
 #### Manual Acceptance Checklist
 
-- [ ] Visit `http://localhost/editor-inert-host`
-- [ ] See labeled editor region with sample content
-- [ ] Content remains after refresh
-- [ ] DOM inspection shows ordinary HTML elements
-- [ ] Content is NOT editable (no cursor on click)
+- [x] Visit `http://localhost/editor-inert-host`
+- [x] See labeled editor region with sample content
+- [x] Content remains after refresh
+- [x] DOM inspection shows ordinary HTML elements
+- [x] Content is NOT editable (no cursor on click)
 
 #### Files Changed
 - `src/Editor/Examples/A1_InertHost.php` ✅
