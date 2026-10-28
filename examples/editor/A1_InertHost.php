@@ -35,7 +35,7 @@ function example(): void
         'name'          => 'editor-inert-host',
         'path'          => __DIR__ . '/../../public/',
         'renderer'      => $res,
-        'template'      => __DIR__ . '/../../editor/assets/index.tpl.html',
+        'template'      => __DIR__ . '/templates/index.tpl.html',
         'opts'          => [
             'title'         => 'Thorm Editor — A1 Inert Host',
             'containerId'   => 'app',
