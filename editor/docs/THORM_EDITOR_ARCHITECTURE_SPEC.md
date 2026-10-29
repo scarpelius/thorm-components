@@ -6,7 +6,7 @@
 **Date:** 2026-10-25  
 **Version:** 1.1 (incremental, human-verifiable implementation plan; proposed APIs are not implemented APIs)
 
-> **Instruction to implementation agents:** This is an architecture and requirements document, not a claim that all described APIs exist today. Confirm the exact current Thorm checkout before modifying code. Build a visible, inert editor element first. Implement exactly one small, manually verifiable vertical slice at a time, with PHP and JavaScript responsibilities kept explicit. Stop after each slice for maintainer review. Preserve existing behavior and document architectural deviations in an Architecture Decision Record (ADR). Do not silently substitute an independent editor model, ProseMirror, TipTap, a virtual DOM, or a wholesale `innerHTML` replacement engine.
+> **Instruction to implementation agents:** This is an architecture and proposal document, not a claim that all described APIs exist today. Confirm the exact current Thorm checkout before modifying code. Build a visible, inert editor element first. Implement exactly one small, manually verifiable vertical slice at a time, with PHP and JavaScript responsibilities kept explicit. Stop after each slice for maintainer review. Preserve existing behavior and document architectural deviations in an Architecture Decision Record (ADR). Do not silently substitute an independent editor model, ProseMirror, TipTap, a virtual DOM, or a wholesale `innerHTML` replacement engine.
 
 ## 1. Purpose and background
 
