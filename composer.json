@@ -12,6 +12,7 @@
     "autoload": {
         "psr-4": {
             "Thorm\\Components\\Editor\\": "editor/src/php/",
+            "Thorm\\Components\\Editor\\Commands\\": "editor/src/php/Commands/",
             "Thorm\\Components\\Editor\\Examples\\": "examples/editor/"
         }
     },
