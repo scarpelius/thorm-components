@@ -4,9 +4,9 @@
 
 The document is a collection of **blocks**. Each block is a user-defined, meaningful unit of content (chapter, section, lesson, etc.). The document root is a structural list of blocks.
 
-- The document structure (block list, order, types) is stored in a state atom (`$doc`).
-- Each block has its own state atom (`$block-{id}`) holding that block's content IR.
-- Block content is **immutable per edit** (copy-on-write): each edit returns a new content IR.
+- The document structure (block list, order, types) is a `DocumentStructure` object.
+- Each block has a `Block` object holding its content IR.
+- Block content is **immutable per edit** (copy-on-write): each structural operation returns a new `DocumentStructure`.
 - Block boundaries are user-defined: a block is a top-level content unit. Splitting or merging blocks is a deliberate user action.
 
 ## 2. Document Identification
@@ -48,10 +48,10 @@ The toolbar supports the following formatting operations, most of which act on a
 
 ## 5. Undo/Redo
 
-Undo/redo is implemented **per block** using the **command pattern**.
+Undo/redo is implemented **client-side in JavaScript**, per block.
 
-- Each block has its own **command stack**.
-- Each edit operation (text change, node move, style change, insert, delete) produces a **command** object.
+- Each block has its own **command stack** in the JS editor.
+- Each edit operation (text change, node move, style change, insert, delete) produces a **command** object in the JS editor.
 - A command contains:
   - `type`: the operation type (e.g. `setText`, `moveNode`, `updateStyle`, `insertNode`, `removeNode`).
   - `blockId`: the target block.
@@ -60,8 +60,8 @@ Undo/redo is implemented **per block** using the **command pattern**.
   - `after`: the state of the affected node(s) after the operation.
 - **Undo**: pop the last command from the block's stack and apply its `before` state.
 - **Redo**: push the last undone command and apply its `after` state.
-- Undo/redo operates on a single block's atom.
-- Structural operations (add/remove/reorder/split/merge blocks) are separate commands that only touch the document structure atom.
+- Undo/redo operates on a single block's IR tree in memory.
+- Structural operations (add/remove/reorder/split/merge blocks) are separate commands that only touch the document structure.
 - Per-block command stacks can be saved with the block.
 
 ## 6. Security
@@ -76,13 +76,12 @@ Undo/redo is implemented **per block** using the **command pattern**.
 - A node within a block becomes editable on user request (click/focus/dedicated edit action).
 - The node loses `contenteditable` when focus is lost.
 - While a node is editable, native DOM edits happen inside the `contenteditable` host.
-- On blur/commit, the edited DOM content is serialized into a Thorm IR fragment and applied to the block's atom.
+- On blur/commit, the edited DOM content is serialized into a Thorm IR fragment and applied to the block's IR tree.
 - Changes are **batched** and saved per-block.
 
 ## 8. Reactivity
 
-- Thorm's atom reactivity is used to update the DOM.
-- The `$block-{id}` atom drives re-rendering of that block's DOM.
-- The `$doc` atom drives re-rendering of the block list/structure.
-- The `editing` atom controls whether a node is editable.
-- Per-block command stacks drive per-block undo/redo UI.
+- The JS editor maintains the IR tree in memory.
+- DOM updates are driven by the JS editor's command stack and local IR state.
+- The server does not re-render the page during editing.
+- The server is only involved for initial page generation and saving.

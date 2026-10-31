@@ -11,13 +11,13 @@ class ComposerStaticInit89f13032f1477694ce1d377b26edaa46
         '074398534e92f90ccd350ee2c9a9f109' => __DIR__ . '/..' . '/bitforge/thorm/src/php/functions.php',
         'd0b2af7cc2d88d21871342c846771a8d' => __DIR__ . '/..' . '/bitforge/thorm/src/php/tags.php',
         'ec07570ca5a812141189b1fa81503674' => __DIR__ . '/..' . '/phpunit/phpunit/src/Framework/Assert/Functions.php',
+        '1fd3f96c443022942f6a1fe763061446' => __DIR__ . '/../..' . '/editor/src/php/IRToThorm.php',
     );
 
     public static $prefixLengthsPsr4 = array (
         'T' =>
         array (
             'Thorm\\Components\\Editor\\Examples\\' => 33,
-            'Thorm\\Components\\Editor\\Commands\\' => 33,
             'Thorm\\Components\\Editor\\' => 24,
             'Thorm\\' => 6,
         ),
@@ -35,10 +35,6 @@ class ComposerStaticInit89f13032f1477694ce1d377b26edaa46
         'Thorm\\Components\\Editor\\Examples\\' =>
         array (
             0 => __DIR__ . '/../..' . '/examples/editor',
-        ),
-        'Thorm\\Components\\Editor\\Commands\\' =>
-        array (
-            0 => __DIR__ . '/../..' . '/editor/src/php/Commands',
         ),
         'Thorm\\Components\\Editor\\' =>
         array (

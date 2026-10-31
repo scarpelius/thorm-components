@@ -7,7 +7,6 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Thorm\\Components\\Editor\\Examples\\' => array($baseDir . '/examples/editor'),
-    'Thorm\\Components\\Editor\\Commands\\' => array($baseDir . '/editor/src/php/Commands'),
     'Thorm\\Components\\Editor\\' => array($baseDir . '/editor/src/php'),
     'Thorm\\' => array($vendorDir . '/bitforge/thorm/src/php'),
     'PhpParser\\' => array($vendorDir . '/nikic/php-parser/lib/PhpParser'),

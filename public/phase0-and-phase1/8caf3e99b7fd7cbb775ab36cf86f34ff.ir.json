@@ -1,0 +1,303 @@
+{
+    "atoms": [],
+    "root": {
+        "k": "fragment",
+        "children": [
+            {
+                "k": "el",
+                "tag": "h1",
+                "props": {
+                    "attrs": [],
+                    "style": [],
+                    "on": []
+                },
+                "children": [
+                    {
+                        "k": "text",
+                        "value": {
+                            "k": "val",
+                            "v": "Editable Document"
+                        }
+                    }
+                ]
+            },
+            {
+                "k": "el",
+                "tag": "p",
+                "props": {
+                    "attrs": [],
+                    "style": [],
+                    "on": []
+                },
+                "children": [
+                    {
+                        "k": "text",
+                        "value": {
+                            "k": "val",
+                            "v": "Click on a block to edit it. Changes are saved every 60 seconds."
+                        }
+                    }
+                ]
+            },
+            {
+                "k": "fragment",
+                "children": [
+                    {
+                        "k": "el",
+                        "tag": "h2",
+                        "props": {
+                            "attrs": [],
+                            "style": [],
+                            "on": []
+                        },
+                        "children": [
+                            {
+                                "k": "text",
+                                "value": {
+                                    "k": "val",
+                                    "v": "Introduction"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "k": "el",
+                        "tag": "div",
+                        "props": {
+                            "attrs": {
+                                "contenteditable": {
+                                    "k": "val",
+                                    "v": "true"
+                                },
+                                "data-block-id": {
+                                    "k": "val",
+                                    "v": "block-1"
+                                }
+                            },
+                            "style": [],
+                            "on": []
+                        },
+                        "children": [
+                            {
+                                "k": "el",
+                                "tag": "p",
+                                "props": {
+                                    "attrs": [],
+                                    "style": [],
+                                    "on": []
+                                },
+                                "children": [
+                                    {
+                                        "k": "text",
+                                        "value": {
+                                            "k": "val",
+                                            "v": "This is an editable section. You can change this text directly in the browser."
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "k": "el",
+                                "tag": "h3",
+                                "props": {
+                                    "attrs": [],
+                                    "style": [],
+                                    "on": []
+                                },
+                                "children": [
+                                    {
+                                        "k": "text",
+                                        "value": {
+                                            "k": "val",
+                                            "v": "Subsection"
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "k": "el",
+                                "tag": "p",
+                                "props": {
+                                    "attrs": [],
+                                    "style": [],
+                                    "on": []
+                                },
+                                "children": [
+                                    {
+                                        "k": "el",
+                                        "tag": "strong",
+                                        "props": {
+                                            "attrs": [],
+                                            "style": [],
+                                            "on": []
+                                        },
+                                        "children": [
+                                            {
+                                                "k": "text",
+                                                "value": {
+                                                    "k": "val",
+                                                    "v": "bold text"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "k": "text",
+                                        "value": {
+                                            "k": "val",
+                                            "v": " and "
+                                        }
+                                    },
+                                    {
+                                        "k": "el",
+                                        "tag": "div",
+                                        "props": {
+                                            "attrs": [],
+                                            "style": [],
+                                            "on": []
+                                        },
+                                        "children": [
+                                            {
+                                                "k": "text",
+                                                "value": {
+                                                    "k": "val",
+                                                    "v": "italic text"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "k": "fragment",
+                "children": [
+                    {
+                        "k": "el",
+                        "tag": "h2",
+                        "props": {
+                            "attrs": [],
+                            "style": [],
+                            "on": []
+                        },
+                        "children": [
+                            {
+                                "k": "text",
+                                "value": {
+                                    "k": "val",
+                                    "v": "Details"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "k": "el",
+                        "tag": "div",
+                        "props": {
+                            "attrs": {
+                                "contenteditable": {
+                                    "k": "val",
+                                    "v": "true"
+                                },
+                                "data-block-id": {
+                                    "k": "val",
+                                    "v": "block-2"
+                                }
+                            },
+                            "style": [],
+                            "on": []
+                        },
+                        "children": [
+                            {
+                                "k": "el",
+                                "tag": "p",
+                                "props": {
+                                    "attrs": [],
+                                    "style": [],
+                                    "on": []
+                                },
+                                "children": [
+                                    {
+                                        "k": "text",
+                                        "value": {
+                                            "k": "val",
+                                            "v": "Another editable block with its own content."
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                "k": "el",
+                                "tag": "ul",
+                                "props": {
+                                    "attrs": [],
+                                    "style": [],
+                                    "on": []
+                                },
+                                "children": [
+                                    {
+                                        "k": "el",
+                                        "tag": "li",
+                                        "props": {
+                                            "attrs": [],
+                                            "style": [],
+                                            "on": []
+                                        },
+                                        "children": [
+                                            {
+                                                "k": "text",
+                                                "value": {
+                                                    "k": "val",
+                                                    "v": "First item"
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "k": "el",
+                                        "tag": "li",
+                                        "props": {
+                                            "attrs": [],
+                                            "style": [],
+                                            "on": []
+                                        },
+                                        "children": [
+                                            {
+                                                "k": "text",
+                                                "value": {
+                                                    "k": "val",
+                                                    "v": "Second item"
+                                                }
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "k": "el",
+                "tag": "script",
+                "props": {
+                    "attrs": [],
+                    "style": [],
+                    "on": []
+                },
+                "children": [
+                    {
+                        "k": "text",
+                        "value": {
+                            "k": "val",
+                            "v": "window.editorState = {\"block-1\":[{\"id\":\"n1\",\"k\":\"el\",\"tag\":\"p\",\"props\":[],\"children\":[{\"id\":\"t1\",\"k\":\"text\",\"value\":\"This is an editable section. You can change this text directly in the browser.\"}]},{\"id\":\"n2\",\"k\":\"el\",\"tag\":\"h3\",\"props\":[],\"children\":[{\"id\":\"t2\",\"k\":\"text\",\"value\":\"Subsection\"}]},{\"id\":\"n3\",\"k\":\"el\",\"tag\":\"p\",\"props\":[],\"children\":[{\"id\":\"t3\",\"k\":\"el\",\"tag\":\"strong\",\"props\":[],\"children\":[{\"id\":\"t4\",\"k\":\"text\",\"value\":\"bold text\"}]},{\"id\":\"t5\",\"k\":\"text\",\"value\":\" and \"},{\"id\":\"t6\",\"k\":\"el\",\"tag\":\"em\",\"props\":[],\"children\":[{\"id\":\"t7\",\"k\":\"text\",\"value\":\"italic text\"}]}]}],\"block-2\":[{\"id\":\"n4\",\"k\":\"el\",\"tag\":\"p\",\"props\":[],\"children\":[{\"id\":\"t8\",\"k\":\"text\",\"value\":\"Another editable block with its own content.\"}]},{\"id\":\"n5\",\"k\":\"el\",\"tag\":\"ul\",\"props\":[],\"children\":[{\"id\":\"n6\",\"k\":\"el\",\"tag\":\"li\",\"props\":[],\"children\":[{\"id\":\"t9\",\"k\":\"text\",\"value\":\"First item\"}]},{\"id\":\"n7\",\"k\":\"el\",\"tag\":\"li\",\"props\":[],\"children\":[{\"id\":\"t10\",\"k\":\"text\",\"value\":\"Second item\"}]}]}]};"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+}
