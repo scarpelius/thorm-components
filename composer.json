@@ -13,7 +13,10 @@
         "psr-4": {
             "Thorm\\Components\\Editor\\": "editor/src/php/",
             "Thorm\\Components\\Editor\\Examples\\": "examples/editor/"
-        }
+        },
+        "files": [
+            "editor/src/php/IRToThorm.php"
+        ]
     },
     "minimum-stability": "alpha",
     "prefer-stable": true
