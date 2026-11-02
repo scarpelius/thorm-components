@@ -12,6 +12,7 @@
     "autoload": {
         "psr-4": {
             "Thorm\\Components\\Editor\\": "editor/src/php/",
+            "Thorm\\Components\\Editor\\Widgets\\": "editor/src/php/widgets/",
             "Thorm\\Components\\Editor\\Examples\\": "examples/editor/"
         },
         "files": [

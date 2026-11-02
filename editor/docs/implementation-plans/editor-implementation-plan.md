@@ -104,7 +104,8 @@ Phased plan for the Thorm-based browser text editor. The editor is a **client-si
     - Example: `DragHandleWidget` — drag handle for reordering blocks.
     - Widgets are attached to an `EditorNode` and rendered as part of the block's page IR.
 
-1.1.4. **Refactor the example** (`examples/editor/phase0-and-phase1.php`)
+1.1.4. **Create the example** (`examples/editor/phase1.1-editor-node-helper.php`)
+    - Use existing phase0-and-phase1.php as reference.
     - Replace the inline `foreach` loop (title heading + contenteditable div + IR conversion) with `$node = new EditorNode($block); $blocks[] = $node->render(); $blockStates = $node->getState();`.
     - Attach a default toolbar and widgets to each node.
     - Entry point becomes a thin composition script: load document → build `EditorNode`s → build page IR → render.
@@ -173,6 +174,7 @@ Phased plan for the Thorm-based browser text editor. The editor is a **client-si
 - `examples/editor/sample.json` — sample document.
 - `examples/editor/templates/phase0-and-phase1.tpl.html` — page template.
 - `editor/tests/IRToThormTest.php` — test suite.
+- `examples/editor/phase1.1-editor-node-helper.php` — example entry point (Phase 1.1).
 - `editor/src/php/EditorNode.php` — `EditorNode` helper class (Phase 1.1).
 - `editor/src/php/EditorToolbar.php` — editor toolbar / command registry (Phase 1.1).
 - `editor/src/php/EditorWidget.php` + `editor/src/php/widgets/` — component display widgets (Phase 1.1).
