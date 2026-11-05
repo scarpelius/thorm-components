@@ -1,18 +1,23 @@
-/* Thorm Editor — A1: Visible Host (Inert Editor Area) */
-.thorm-editor-host {
-    border: 2px dashed #666;
-    padding: 16px;
-    margin: 16px 0;
-    background: #fafafa;
+/* Thorm Editor — CSS */
+[data-block-id] {
+    border: 2px dashed transparent;
+    border-radius: 6px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    transition: border-color 0.15s ease;
 }
-
-.thorm-editor-label {
-    background: #666;
-    color: white;
-    padding: 4px 8px;
-    font-size: 14px;
-    font-weight: bold;
-    border-radius: 4px;
-    display: inline-block;
-    margin-bottom: 12px;
+[data-block-id]:hover,
+[data-block-id]:focus-within {
+    border-color: #6c757d;
+    background-color: #fafafa;
+    color: #080808;
+}
+[data-block-id] h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+}
+[data-block-id] p:last-child,
+[data-block-id] ul:last-child,
+[data-block-id] ol:last-child {
+    margin-bottom: 0;
 }

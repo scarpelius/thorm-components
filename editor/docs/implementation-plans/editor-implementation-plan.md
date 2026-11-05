@@ -19,7 +19,7 @@ Phased plan for the Thorm-based browser text editor. The editor is a **client-si
 
 ### Key Design Decisions
 
-1. **No `EditorNode` class** — The server doesn't need a custom node class. The stored IR is raw arrays, and the JS editor works directly with these arrays.
+1. **No server-side `EditorNode`** — The server's *stored* IR is raw arrays, and no custom node class is needed to persist content. Phase 1.1 adds a server-side `EditorNode` *helper* (not a stored node class) to standardize block → page IR conversion and to carry the toolbar/command registry and display widgets.
 2. **No `BlockContent` class** — This was a carrier for commands. Commands don't run on the server. The `Block.content` array is all that's needed.
 3. **No server-side `Command`/`CommandStack`** — Undo/redo is handled client-side in the JS editor.
 4. **`IRToThorm` conversion** — The server converts stored block IR arrays (editor format) into Thorm IR nodes for initial page rendering.
@@ -66,6 +66,54 @@ Phased plan for the Thorm-based browser text editor. The editor is a **client-si
 1.5. **Tests** (`editor/tests/IRToThormTest.php`)
     - Tests for `irToThormNodes`, `createThormTag`, and `convertPropsToThorm`.
     - 12 test methods covering empty IR, text nodes, element nodes, nested IR, multiple nodes, unknown tag fallback, props conversion, and attribute handling.
+
+### Phase 1.1: EditorNode Helper (PHP)
+
+**Goal**: Add a server-side `EditorNode` helper class that wraps a block's IR tree. It standardizes the page-building logic from `examples/editor/phase0-and-phase1.php` and provides the foundation for the editor toolbar (collection of icons with editor commands) and other component display widgets.
+
+**Tasks**:
+
+1.1.1. **EditorNode class** (`editor/src/php/EditorNode.php`)
+    - `EditorNode` class wrapping a single `Block` (its IR tree and metadata).
+    - Properties: `block` (the wrapped `Block`), `thormNodes` (the Thorm IR nodes for the block content, cached), `toolbar` (the block's editor toolbar, optional).
+    - Methods:
+      - `__construct(Block $block)` — wraps a block.
+      - `getThormNodes(): array` — converts `block->content` to Thorm IR nodes via `irToThormNodes()` (cached until content changes).
+      - `render(): array` — builds the block's page IR: heading for the block title + the contenteditable wrapper `div` with its Thorm nodes. This is exactly what the example currently inlines in `phase0-and-phase1.php`.
+      - `getState(): array` — returns the editor state payload (`id` => `content`) for embedding in the page script.
+      - `setToolbar(EditorToolbar $toolbar): void` — attaches the editor toolbar to this node.
+      - `getToolbar(): ?EditorToolbar` — returns the attached toolbar.
+      - `addWidget(EditorWidget $widget): void` — attaches a display widget (e.g. drag handle, header badge) to this node.
+      - `getWidgets(): array` — returns the attached widgets.
+    - This is the single place where block → page IR conversion lives, so the example entry point no longer contains the loop.
+
+1.1.2. **Editor toolbar** (`editor/src/php/EditorToolbar.php`)
+    - `EditorToolbar` class representing the collection of editor commands available for a block.
+    - Properties: `commands` (array of command definitions).
+    - Command definition: `['name' => 'bold', 'label' => 'Bold', 'icon' => 'icon-bold', 'handler' => callable]`.
+    - Methods:
+      - `__construct(array $commands = [])`.
+      - `addCommand(string $name, string $label, string $icon, callable $handler): void`.
+      - `getCommands(): array` — returns the command list (serialized to the browser as JSON for the toolbar UI).
+      - `execute(string $name, array $context): mixed` — runs a command's handler, returning its result.
+    - The toolbar itself is data on the server (icon set + command registry); the icon buttons are rendered client-side in Phase 2 from this serialized list, keeping all commands server-side per the architecture.
+
+1.1.3. **Display widgets** (`editor/src/php/EditorWidget.php` + `editor/src/php/widgets/`)
+    - Base `EditorWidget` class with `mount(EditorNode $node)`, `render(): array`, `destroy(): void`.
+    - Example: `BlockHeaderWidget` — renders the block title and type badge above the content.
+    - Example: `DragHandleWidget` — drag handle for reordering blocks.
+    - Widgets are attached to an `EditorNode` and rendered as part of the block's page IR.
+
+1.1.4. **Create the example** (`examples/editor/phase1.1-editor-node-helper.php`)
+    - Use existing phase0-and-phase1.php as reference.
+    - Replace the inline `foreach` loop (title heading + contenteditable div + IR conversion) with `$node = new EditorNode($block); $blocks[] = $node->render(); $blockStates = $node->getState();`.
+    - Attach a default toolbar and widgets to each node.
+    - Entry point becomes a thin composition script: load document → build `EditorNode`s → build page IR → render.
+
+1.1.5. **Tests** (`editor/tests/EditorNodeTest.php`)
+    - Tests that `render()` produces the same IR as the pre-refactor inline code (title heading, contenteditable wrapper with `data-block-id` attribute).
+    - Tests for `getState()`, toolbar command registry, and widget attachment/rendering.
+
 ### Phase 2: JS Editor (Client-Side)
 
 **Goal**: Build the JavaScript editor that operates on the IR tree in memory.
@@ -126,6 +174,11 @@ Phased plan for the Thorm-based browser text editor. The editor is a **client-si
 - `examples/editor/sample.json` — sample document.
 - `examples/editor/templates/phase0-and-phase1.tpl.html` — page template.
 - `editor/tests/IRToThormTest.php` — test suite.
+- `examples/editor/phase1.1-editor-node-helper.php` — example entry point (Phase 1.1).
+- `editor/src/php/EditorNode.php` — `EditorNode` helper class (Phase 1.1).
+- `editor/src/php/EditorToolbar.php` — editor toolbar / command registry (Phase 1.1).
+- `editor/src/php/EditorWidget.php` + `editor/src/php/widgets/` — component display widgets (Phase 1.1).
+- `editor/tests/EditorNodeTest.php` — tests for the helper (Phase 1.1).
 - `editor/src/js/` — JavaScript editor (Phase 2).
 - `editor/src/php/SaveHandler.php` — save endpoint handler (Phase 3).
 
@@ -144,5 +197,6 @@ Phased plan for the Thorm-based browser text editor. The editor is a **client-si
 
 1. Review and approve this plan.
 2. Phase 1 is complete (document model, IR conversion, example, tests).
-3. Start Phase 2 (JS editor).
-4. Start Phase 3 (save endpoint).
+3. Start Phase 1.1 (EditorNode PHP helper, toolbar, widgets, example refactor).
+4. Start Phase 2 (JS editor).
+5. Start Phase 3 (save endpoint).
