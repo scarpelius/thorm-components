@@ -1,0 +1,66 @@
+@use "../../../scss/mixins/border-radius" as *;
+@use "variables" as *;
+
+//
+// Callouts
+//
+
+@layer custom {
+  .bd-callout {
+    --link-color: var(--bd-callout-color);
+    --link-hover-color: var(--bd-callout-color);
+    --code-color: var(--bd-callout-color);
+
+    position: relative;
+    container-type: inline-size;
+    padding: 1rem 1rem 1rem 1.75rem;
+    font-size: .875rem;
+    line-height: 1.5;
+    color: var(--bd-callout-color, var(--bs-body-color));
+    background-color: var(--bd-callout-bg, var(--bs-gray-100));
+    border: 1px solid var(--bd-callout-border, var(--bs-border-color));
+    @include border-radius(var(--radius-5));
+
+    &::before {
+      --offset: .5rem;
+      position: absolute;
+      inset: var(--offset) auto var(--offset) var(--offset);
+      width: .25rem;
+      content: "";
+      background-color: var(--bd-callout-band, var(--bd-callout-border, var(--bs-gray-300)));
+      @include border-radius(var(--radius-2));
+    }
+
+    h4 {
+      margin-bottom: .25rem;
+    }
+
+    a,
+    code {
+      font-weight: 500;
+      color: color-mix(in oklch, var(--bd-callout-color), var(--bs-fg-body) 50%);
+    }
+
+    > :last-child {
+      margin-bottom: 0;
+    }
+
+    + .bd-callout {
+      margin-top: -.25rem;
+    }
+
+    @container (width >= 768px) {
+      padding: 1.25rem;
+    }
+  }
+
+  // Variations
+  @each $variant in $bd-callout-variants {
+    .bd-callout-#{$variant} {
+      --bd-callout-color: var(--bs-#{$variant}-fg-emphasis);
+      --bd-callout-bg: color-mix(in oklch, var(--bs-#{$variant}-bg-subtle), transparent 50%);
+      --bd-callout-border: var(--bs-#{$variant}-border);
+      --bd-callout-band: color-mix(in oklch, var(--bs-#{$variant}-border), var(--bs-#{$variant}-fg-emphasis));
+    }
+  }
+}

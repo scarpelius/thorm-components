@@ -1,0 +1,195 @@
+// check-unused-imports-disable — test infrastructure imports.
+@use "sass:map";
+@use "../../config" as *;
+@use "../../functions" as *;
+@use "../../mixins/utilities" as *;
+
+// Integration-style tests for the utilities API loop.
+// Each test calls generate-utilities-loop — the same mixin that _api.scss calls — so
+// a logic change in the real loop is immediately caught here without any mirrored conditions.
+//
+// A minimal two-breakpoint map is used to keep output predictable and tests fast.
+$test-breakpoints: (
+  xs: 0,
+  sm: 576px,
+);
+
+@include describe("utilities/api loop conditions") {
+  @include describe("enabled") {
+    @include it("skips utilities with enabled: false") {
+      $test-utilities: (
+        opacity: (
+          property: opacity,
+          values: (50: .5)
+        ),
+        float: (
+          property: float,
+          enabled: false,
+          values: (start: inline-start, end: inline-end)
+        )
+      );
+
+      @include assert() {
+        @include output() {
+          @include generate-utilities-loop($test-utilities, $test-breakpoints);
+        }
+
+        @include expect() {
+          .opacity-50 {
+            opacity: .5;
+          }
+        }
+      }
+    }
+
+    @include it("outputs utilities without an explicit enabled key") {
+      $test-utilities: (
+        opacity: (
+          property: opacity,
+          values: (25: .25)
+        )
+      );
+
+      @include assert() {
+        @include output() {
+          @include generate-utilities-loop($test-utilities, $test-breakpoints);
+        }
+
+        @include expect() {
+          .opacity-25 {
+            opacity: .25;
+          }
+        }
+      }
+    }
+  }
+
+  @include describe("responsive") {
+    @include it("generates responsive classes only for utilities with responsive: true") {
+      $test-utilities: (
+        opacity: (
+          property: opacity,
+          responsive: true,
+          values: (50: .5)
+        ),
+        float: (
+          property: float,
+          values: (start: inline-start)
+        )
+      );
+
+      @include assert() {
+        @include output() {
+          @include generate-utilities-loop($test-utilities, $test-breakpoints);
+        }
+
+        @include expect() {
+          .opacity-50 {
+            opacity: .5;
+          }
+
+          .float-start {
+            float: inline-start;
+          }
+
+          @media (width >= 576px) {
+            .sm\:opacity-50 {
+              opacity: .5;
+            }
+          }
+        }
+      }
+    }
+
+    @include it("does not generate responsive classes for utilities without responsive: true") {
+      $test-utilities: (
+        float: (
+          property: float,
+          values: (start: inline-start)
+        )
+      );
+
+      @include assert() {
+        @include output() {
+          @include generate-utilities-loop($test-utilities, $test-breakpoints);
+        }
+
+        @include expect() {
+          .float-start {
+            float: inline-start;
+          }
+          // nothing at sm — responsive is not set
+        }
+      }
+    }
+  }
+
+  @include describe("dark") {
+    @include it("generates dark-prefixed classes for utilities with dark: true") {
+      $test-utilities: (
+        opacity: (
+          property: opacity,
+          values: (50: .5)
+        ),
+        bg: (
+          property: background-color,
+          class: bg,
+          dark: true,
+          values: (white: #fff, black: #000)
+        )
+      );
+
+      @include assert() {
+        @include output() {
+          @include generate-utilities-loop($test-utilities, $test-breakpoints);
+        }
+
+        @include expect() {
+          .opacity-50 {
+            opacity: .5;
+          }
+
+          .bg-white {
+            background-color: #fff;
+          }
+
+          .bg-black {
+            background-color: #000;
+          }
+
+          @media (prefers-color-scheme: dark) {
+            .dark\:bg-white {
+              background-color: #fff;
+            }
+
+            .dark\:bg-black {
+              background-color: #000;
+            }
+          }
+        }
+      }
+    }
+
+    @include it("does not generate dark classes for utilities without dark: true") {
+      $test-utilities: (
+        opacity: (
+          property: opacity,
+          values: (50: .5)
+        )
+      );
+
+      @include assert() {
+        @include output() {
+          @include generate-utilities-loop($test-utilities, $test-breakpoints);
+        }
+
+        @include expect() {
+          .opacity-50 {
+            opacity: .5;
+          }
+          // nothing in @media (prefers-color-scheme: dark) — dark is not set
+        }
+      }
+    }
+  }
+}

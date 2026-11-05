@@ -1,0 +1,12 @@
+@use "../../../scss/colors" as *;
+@use "variables" as *;
+
+@layer custom {
+  .skippy {
+    background-color: $bd-purple;
+
+    a {
+      color: $white;
+    }
+  }
+}

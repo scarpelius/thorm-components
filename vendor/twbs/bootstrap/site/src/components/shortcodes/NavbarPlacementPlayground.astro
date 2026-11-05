@@ -1,0 +1,144 @@
+---
+import Example from '@components/shortcodes/Example.astro'
+
+const placements = [
+  { value: '', label: 'Default (static)' },
+  { value: 'fixed-top', label: 'Fixed top' },
+  { value: 'fixed-bottom', label: 'Fixed bottom' },
+  { value: 'sticky-top', label: 'Sticky top' },
+  { value: 'sticky-bottom', label: 'Sticky bottom' }
+]
+---
+
+<div class="bg-1 p-3 fs-sm rounded-3">
+  <div class="vstack gap-1">
+    <label class="form-label fw-semibold mb-0">Placement</label>
+    <div>
+      <button
+        type="button"
+        class="btn-outline theme-secondary"
+        id="navbar-placement-menu"
+        data-bs-toggle="menu"
+        aria-expanded="false"
+        data-placement=""
+      >
+        <span>Default (static)</span>
+        <svg class="bi ms-1" width="16" height="16" aria-hidden="true">
+          <use href="#chevron-expand"></use>
+        </svg>
+      </button>
+      <div class="menu">
+        {
+          placements.map((p) => (
+            <a class:list={['menu-item', { active: p.value === '' }]} href="#" data-placement={p.value}>
+              {p.label}
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<Example
+  code={`<nav class="navbar bg-1">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">Default</a>
+  </div>
+</nav>`}
+  id="navbar-placement-preview"
+/>
+
+<script>
+  import { Menu } from '@bootstrap'
+  import { highlightCode } from '@twbs/bui/shiki'
+
+  const placementMenuButton = document.querySelector('#navbar-placement-menu') as HTMLButtonElement
+  const placementMenuItems = document.querySelectorAll('#navbar-placement-menu + .menu .menu-item')
+  const previewContainer = document.querySelector('#navbar-placement-preview') as HTMLElement
+  const previewNavbar = previewContainer?.querySelector('.navbar') as HTMLElement
+  let codeSnippetPre = previewContainer
+    ?.closest('.bd-example-snippet')
+    ?.querySelector('.astro-code') as HTMLElement | null
+
+  const placementClasses = ['fixed-top', 'fixed-bottom', 'sticky-top', 'sticky-bottom']
+
+  const placementLabels: Record<string, string> = {
+    '': 'Default',
+    'fixed-top': 'Fixed top',
+    'fixed-bottom': 'Fixed bottom',
+    'sticky-top': 'Sticky top',
+    'sticky-bottom': 'Sticky bottom'
+  }
+
+  function updatePlacement(placement: string) {
+    if (!previewNavbar || !placementMenuButton) return
+
+    const labelSpan = placementMenuButton.querySelector('span')
+    if (labelSpan) {
+      labelSpan.textContent = placementLabels[placement]
+        ? `${placementLabels[placement]}${placement ? '' : ' (static)'}`
+        : 'Default (static)'
+    }
+    placementMenuButton.dataset.placement = placement
+
+    placementMenuItems.forEach((item) => {
+      const itemPlacement = (item as HTMLElement).dataset.placement
+      item.classList.toggle('active', itemPlacement === placement)
+    })
+
+    // Remove all placement classes
+    placementClasses.forEach((cls) => {
+      previewNavbar.classList.remove(cls)
+    })
+
+    // Add new placement class if not default
+    if (placement) {
+      previewNavbar.classList.add(placement)
+    }
+
+    // Update the brand text to show current placement
+    const brand = previewNavbar.querySelector('.navbar-brand')
+    if (brand) {
+      brand.textContent = placementLabels[placement] || 'Default'
+    }
+
+    // Update code snippet
+    updateCodeSnippet(placement)
+  }
+
+  async function updateCodeSnippet(placement: string) {
+    if (!codeSnippetPre) return
+
+    const placementClass = placement ? ` ${placement}` : ''
+    const label = placementLabels[placement] || 'Default'
+
+    const htmlCode = `<nav class="navbar${placementClass} bg-1">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">${label}</a>
+  </div>
+</nav>`
+
+    const highlighted = await highlightCode(htmlCode, 'html')
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(highlighted, 'text/html')
+    const newPre = doc.querySelector('pre')
+    if (newPre) {
+      codeSnippetPre.replaceWith(newPre)
+      codeSnippetPre = newPre
+    }
+  }
+
+  if (placementMenuButton) {
+    const placementMenu = Menu.getOrCreateInstance(placementMenuButton)
+
+    placementMenuItems.forEach((item) => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault()
+        const placement = (item as HTMLElement).dataset.placement || ''
+        updatePlacement(placement)
+        placementMenu.hide()
+      })
+    })
+  }
+</script>

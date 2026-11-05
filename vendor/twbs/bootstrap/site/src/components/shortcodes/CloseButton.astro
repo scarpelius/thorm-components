@@ -1,0 +1,27 @@
+---
+interface Props {
+  /**
+   * Additional CSS classes to add to the button (e.g., "me-2 m-auto").
+   */
+  class?: string
+  /**
+   * The component to dismiss (e.g., "dialog", "alert", "drawer", "toast").
+   * Sets the `data-bs-dismiss` attribute.
+   */
+  dismiss?: string
+  /**
+   * The target to dismiss (e.g., "#my-drawer").
+   * Sets the `data-bs-target` attribute.
+   */
+  target?: string
+}
+
+const { class: className, dismiss, target } = Astro.props
+---
+
+<button
+  type="button"
+  class:list={['btn-close', className]}
+  data-bs-dismiss={dismiss}
+  aria-label="Close"
+  data-bs-target={target}></button>

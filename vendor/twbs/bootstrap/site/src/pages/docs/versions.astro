@@ -1,0 +1,57 @@
+---
+import SingleLayout from '@layouts/SingleLayout.astro'
+import { getConfig } from '@libs/config'
+import { getData } from '@libs/data'
+
+function getVersionsSortedDesc<TKey extends string, TVersions extends Record<TKey, string>>(
+  versions: TVersions[],
+  orderBy: TKey
+) {
+  return [...versions].sort((versionA, versionB) => {
+    return versionB[orderBy].localeCompare(versionA[orderBy])
+  })
+}
+---
+
+<SingleLayout
+  title="Versions"
+  description="An appendix of hosted documentation for nearly every release of Bootstrap, from v1 through v6."
+>
+  <div class="row">
+    {
+      getVersionsSortedDesc(getData('docs-versions'), 'group').map((docsVersion) => {
+        return (
+          <div class="md:col-6 lg:col-4 xl:col mb-4">
+            <h2>{docsVersion.group}</h2>
+            <p>{docsVersion.description}</p>
+            <div class="list-group">
+              {docsVersion.versions
+                .slice()
+                .sort((a, b) => b.localeCompare(a))
+                .map((version) => {
+                  // TODO: revert to getConfig().docs_version once we have v6.0.0 released
+                  // const isCurrentVersion = version === getConfig().docs_version
+                  const isCurrentVersion = version === '5.3'
+                  const isAlpha = version === '6.0'
+
+                  return (
+                    <a
+                      class:list={[
+                        'list-group-item list-group-item-action py-2 fg-primary',
+                        (isCurrentVersion || isAlpha) && 'd-flex justify-content-between align-items-center'
+                      ]}
+                      href={`${docsVersion.baseurl}/${version}/`}
+                    >
+                      {version}
+                      {isCurrentVersion && <span class="badge theme-primary">Latest</span>}
+                      {isAlpha && <span class="badge theme-warning">Alpha</span>}
+                    </a>
+                  )
+                })}
+            </div>
+          </div>
+        )
+      })
+    }
+  </div>
+</SingleLayout>

@@ -1,0 +1,39 @@
+@use "../../../scss/mixins/transition" as *;
+
+@layer custom {
+  .anchor-link {
+    padding: 0 .175rem;
+    font-weight: 400;
+    color: color-mix(in srgb, var(--link-color), transparent .5);
+    text-decoration: none;
+    opacity: 0;
+    @include transition(color .15s ease-in-out, opacity .15s ease-in-out);
+
+    &::after {
+      content: "#";
+    }
+
+    &:focus,
+    &:hover,
+    :hover > &,
+    :target > & {
+      color: var(--link-color);
+      text-decoration: none;
+      opacity: 0;
+      @include transition(color .15s ease-in-out, opacity .15s ease-in-out);
+
+      &::after {
+        content: "#";
+      }
+
+      &:focus,
+      &:hover,
+      :hover > &,
+      :target > & {
+        color: var(--link-color);
+        text-decoration: none;
+        opacity: 1;
+      }
+    }
+  }
+}

@@ -1,0 +1,55 @@
+- name: Alert
+  description: Show and hide alert messages to your users.
+  link: components/alerts/#javascript-behavior
+
+- name: Button
+  description: Programmatically control the active state for buttons.
+  link: components/buttons/#button-plugin
+
+- name: Carousel
+  description: Add slideshows to any page, including support for crossfade.
+  link: components/carousel/
+
+- name: Collapse
+  description: Expand and collapse areas of content, or create accordions.
+  link: components/collapse/
+
+- name: Datepicker
+  description: Add date selection to form inputs. Built on Vanilla Calendar Pro.
+  link: forms/datepicker/
+
+- name: Dialog
+  description: Add flexible and responsive dialogs to your project.
+  link: components/dialog/
+
+- name: Menu
+  description: Create menus of links, actions, forms, and more.
+  link: components/menus/
+
+- name: Drawer
+  description: Build and toggle hidden sidebars into any page.
+  link: components/drawer/
+
+- name: Popover
+  description: Create custom overlays. Built on Floating UI.
+  link: components/popovers/
+
+- name: Scrollspy
+  description: Automatically update active nav links based on page scroll.
+  link: components/scrollspy/
+
+- name: Tab
+  description: Allow Bootstrap nav components to toggle contents.
+  link: components/tab/
+
+- name: Toast
+  description: Show and hide notifications to your visitors.
+  link: components/toasts/
+
+- name: Toggler
+  description: Toggle attributes or classes, using simple html markup
+  link: components/toggler/
+
+- name: Tooltip
+  description: Replace browser tooltips with custom ones. Built on Floating UI.
+  link: components/tooltips/

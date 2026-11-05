@@ -1,0 +1,695 @@
+import EventHandler from '../../src/dom/event-handler.js'
+import Popover from '../../src/popover.js'
+import {
+  clearFixture, getFixture, createEvent
+} from '../helpers/fixture.js'
+
+describe('Popover', () => {
+  let fixtureEl
+
+  beforeAll(() => {
+    fixtureEl = getFixture()
+  })
+
+  afterEach(() => {
+    clearFixture()
+
+    const popoverList = document.querySelectorAll('.popover')
+
+    for (const popoverEl of popoverList) {
+      popoverEl.remove()
+    }
+  })
+
+  describe('VERSION', () => {
+    it('should return plugin version', () => {
+      expect(Popover.VERSION).toEqual(jasmine.any(String))
+    })
+  })
+
+  describe('Default', () => {
+    it('should return plugin default config', () => {
+      expect(Popover.Default).toEqual(jasmine.any(Object))
+    })
+  })
+
+  describe('NAME', () => {
+    it('should return plugin name', () => {
+      expect(Popover.NAME).toEqual(jasmine.any(String))
+    })
+  })
+
+  describe('DATA_KEY', () => {
+    it('should return plugin data key', () => {
+      expect(Popover.DATA_KEY).toEqual('bs.popover')
+    })
+  })
+
+  describe('EVENT_KEY', () => {
+    it('should return plugin event key', () => {
+      expect(Popover.EVENT_KEY).toEqual('.bs.popover')
+    })
+  })
+
+  describe('DefaultType', () => {
+    it('should return plugin default type', () => {
+      expect(Popover.DefaultType).toEqual(jasmine.any(Object))
+    })
+  })
+
+  describe('show', () => {
+    it('should toggle a popover after show', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#" title="Popover" data-bs-content="https://x.com/getbootstrap">BS X</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        const popover = new Popover(popoverEl)
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          expect(document.querySelector('.popover')).not.toBeNull()
+          popover.toggle()
+        })
+        popoverEl.addEventListener('hidden.bs.popover', () => {
+          expect(document.querySelector('.popover')).toBeNull()
+          resolve()
+        })
+
+        popover.show()
+      })
+    })
+
+    it('should show a popover', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#" title="Popover" data-bs-content="https://x.com/getbootstrap">BS X</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        const popover = new Popover(popoverEl)
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          expect(document.querySelector('.popover')).not.toBeNull()
+          resolve()
+        })
+
+        popover.show()
+      })
+    })
+
+    it('should set title and content from functions', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#">BS X</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        const popover = new Popover(popoverEl, {
+          title: () => 'Bootstrap',
+          content: () => 'loves writing tests （╯°□°）╯︵ ┻━┻'
+        })
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          const popoverDisplayed = document.querySelector('.popover')
+
+          expect(popoverDisplayed).not.toBeNull()
+          expect(popoverDisplayed.querySelector('.popover-header').textContent).toEqual('Bootstrap')
+          expect(popoverDisplayed.querySelector('.popover-body').textContent).toEqual('loves writing tests （╯°□°）╯︵ ┻━┻')
+          resolve()
+        })
+
+        popover.show()
+      })
+    })
+
+    it('should call content and title functions with trigger element', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#" data-foo="bar">BS X</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        const popover = new Popover(popoverEl, {
+          title(el) {
+            return el.dataset.foo
+          },
+          content(el) {
+            return el.dataset.foo
+          }
+        })
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          const popoverDisplayed = document.querySelector('.popover')
+
+          expect(popoverDisplayed).not.toBeNull()
+          expect(popoverDisplayed.querySelector('.popover-header').textContent).toEqual('bar')
+          expect(popoverDisplayed.querySelector('.popover-body').textContent).toEqual('bar')
+          resolve()
+        })
+
+        popover.show()
+      })
+    })
+
+    it('should call content and title functions with correct this value', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#" data-foo="bar">BS X</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        const popover = new Popover(popoverEl, {
+          title() {
+            return this.dataset.foo
+          },
+          content() {
+            return this.dataset.foo
+          }
+        })
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          const popoverDisplayed = document.querySelector('.popover')
+
+          expect(popoverDisplayed).not.toBeNull()
+          expect(popoverDisplayed.querySelector('.popover-header').textContent).toEqual('bar')
+          expect(popoverDisplayed.querySelector('.popover-body').textContent).toEqual('bar')
+          resolve()
+        })
+
+        popover.show()
+      })
+    })
+
+    it('should show a popover with just content without having header', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#">Nice link</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        const popover = new Popover(popoverEl, {
+          content: 'Some beautiful content :)'
+        })
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          const popoverDisplayed = document.querySelector('.popover')
+
+          expect(popoverDisplayed).not.toBeNull()
+          expect(popoverDisplayed.querySelector('.popover-header')).toBeNull()
+          expect(popoverDisplayed.querySelector('.popover-body').textContent).toEqual('Some beautiful content :)')
+          resolve()
+        })
+
+        popover.show()
+      })
+    })
+
+    it('should show a popover whose content was set only via setContent()', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#">Nice link</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        const popover = new Popover(popoverEl, {})
+
+        popover.setContent({ '.popover-header': 'Late header', '.popover-body': 'Late content' })
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          const popoverDisplayed = document.querySelector('.popover')
+
+          expect(popoverDisplayed).not.toBeNull()
+          expect(popoverDisplayed.querySelector('.popover-body').textContent).toEqual('Late content')
+          resolve()
+        })
+
+        popover.show()
+      })
+    })
+
+    it('should show a popover with just title without having body', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#">Nice link</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        const popover = new Popover(popoverEl, {
+          title: 'Title which does not require content'
+        })
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          const popoverDisplayed = document.querySelector('.popover')
+
+          expect(popoverDisplayed).not.toBeNull()
+          expect(popoverDisplayed.querySelector('.popover-body')).toBeNull()
+          expect(popoverDisplayed.querySelector('.popover-header').textContent).toEqual('Title which does not require content')
+          resolve()
+        })
+
+        popover.show()
+      })
+    })
+
+    it('should show a popover with just title without having body using data-attribute to get config', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#" data-bs-content="" title="Title which does not require content">Nice link</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        const popover = new Popover(popoverEl)
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          const popoverDisplayed = document.querySelector('.popover')
+
+          expect(popoverDisplayed).not.toBeNull()
+          expect(popoverDisplayed.querySelector('.popover-body')).toBeNull()
+          expect(popoverDisplayed.querySelector('.popover-header').textContent).toEqual('Title which does not require content')
+          resolve()
+        })
+
+        popover.show()
+      })
+    })
+
+    it('should NOT show a popover without `title` and `content`', () => {
+      fixtureEl.innerHTML = '<a href="#" data-bs-content="" title="">Nice link</a>'
+
+      const popoverEl = fixtureEl.querySelector('a')
+      const popover = new Popover(popoverEl, { animation: false })
+      const spy = spyOn(EventHandler, 'trigger').and.callThrough()
+
+      popover.show()
+
+      expect(spy).not.toHaveBeenCalledWith(popoverEl, Popover.eventName('show'))
+      expect(document.querySelector('.popover')).toBeNull()
+    })
+
+    it('"setContent" should keep the initial template', () => {
+      fixtureEl.innerHTML = '<a href="#" title="Popover" data-bs-content="https://x.com/getbootstrap" data-bs-custom-class="custom-class">BS X</a>'
+
+      const popoverEl = fixtureEl.querySelector('a')
+      const popover = new Popover(popoverEl)
+
+      popover.setContent({ '.tooltip-inner': 'foo' })
+      const tip = popover._getTipElement()
+
+      expect(tip).toHaveClass('popover')
+      expect(tip).toHaveClass('bs-popover-auto')
+      expect(tip.querySelector('.popover-arrow')).not.toBeNull()
+      expect(tip.querySelector('.popover-header')).not.toBeNull()
+      expect(tip.querySelector('.popover-body')).not.toBeNull()
+    })
+
+    it('should call setContent once', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#">BS X</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        const popover = new Popover(popoverEl, {
+          content: 'Popover content'
+        })
+        expect(popover._templateFactory).toBeNull()
+        let spy = null
+        let times = 1
+
+        popoverEl.addEventListener('hidden.bs.popover', () => {
+          popover.show()
+        })
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          spy = spy || spyOn(popover._templateFactory, 'constructor').and.callThrough()
+          const popoverDisplayed = document.querySelector('.popover')
+
+          expect(popoverDisplayed).not.toBeNull()
+          expect(popoverDisplayed.querySelector('.popover-body').textContent).toEqual('Popover content')
+          expect(spy).toHaveBeenCalledTimes(0)
+          if (times > 1) {
+            resolve()
+            return
+          }
+
+          times++
+          popover.hide()
+        })
+        popover.show()
+      })
+    })
+
+    it('should show a popover with provided custom class', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#" title="Popover" data-bs-content="https://x.com/getbootstrap" data-bs-custom-class="custom-class">BS X</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        const popover = new Popover(popoverEl)
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          const tip = document.querySelector('.popover')
+          expect(tip).not.toBeNull()
+          expect(tip).toHaveClass('custom-class')
+          resolve()
+        })
+
+        popover.show()
+      })
+    })
+
+    it('should keep popover open when mouse leaves after click trigger', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#" title="Popover" data-bs-content="https://x.com/getbootstrap" data-bs-trigger="hover click">BS X</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        new Popover(popoverEl) // eslint-disable-line no-new
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          popoverEl.dispatchEvent(createEvent('mouseout'))
+
+          popoverEl.addEventListener('hide.bs.popover', () => {
+            throw new Error('Popover should not hide when mouse leaves after click')
+          })
+
+          expect(document.querySelector('.popover')).not.toBeNull()
+          resolve()
+        })
+
+        popoverEl.click()
+      })
+    })
+  })
+
+  describe('hide', () => {
+    it('should hide a popover', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#" title="Popover" data-bs-content="https://x.com/getbootstrap">BS X</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        const popover = new Popover(popoverEl)
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          popover.hide()
+        })
+
+        popoverEl.addEventListener('hidden.bs.popover', () => {
+          expect(document.querySelector('.popover')).toBeNull()
+          resolve()
+        })
+
+        popover.show()
+      })
+    })
+  })
+
+  describe('getInstance', () => {
+    it('should return popover instance', () => {
+      fixtureEl.innerHTML = '<a href="#" title="Popover" data-bs-content="https://x.com/getbootstrap">BS X</a>'
+
+      const popoverEl = fixtureEl.querySelector('a')
+      const popover = new Popover(popoverEl)
+
+      expect(Popover.getInstance(popoverEl)).toEqual(popover)
+      expect(Popover.getInstance(popoverEl)).toBeInstanceOf(Popover)
+    })
+
+    it('should return null when there is no popover instance', () => {
+      fixtureEl.innerHTML = '<a href="#" title="Popover" data-bs-content="https://x.com/getbootstrap">BS X</a>'
+
+      const popoverEl = fixtureEl.querySelector('a')
+
+      expect(Popover.getInstance(popoverEl)).toBeNull()
+    })
+  })
+
+  describe('getOrCreateInstance', () => {
+    it('should return popover instance', () => {
+      fixtureEl.innerHTML = '<div></div>'
+
+      const div = fixtureEl.querySelector('div')
+      const popover = new Popover(div)
+
+      expect(Popover.getOrCreateInstance(div)).toEqual(popover)
+      expect(Popover.getInstance(div)).toEqual(Popover.getOrCreateInstance(div, {}))
+      expect(Popover.getOrCreateInstance(div)).toBeInstanceOf(Popover)
+    })
+
+    it('should return new instance when there is no popover instance', () => {
+      fixtureEl.innerHTML = '<div></div>'
+
+      const div = fixtureEl.querySelector('div')
+
+      expect(Popover.getInstance(div)).toBeNull()
+      expect(Popover.getOrCreateInstance(div)).toBeInstanceOf(Popover)
+    })
+
+    it('should return new instance when there is no popover instance with given configuration', () => {
+      fixtureEl.innerHTML = '<div></div>'
+
+      const div = fixtureEl.querySelector('div')
+
+      expect(Popover.getInstance(div)).toBeNull()
+      const popover = Popover.getOrCreateInstance(div, {
+        placement: 'top'
+      })
+      expect(popover).toBeInstanceOf(Popover)
+
+      expect(popover._config.placement).toEqual('top')
+    })
+
+    it('should return the instance when exists without given configuration', () => {
+      fixtureEl.innerHTML = '<div></div>'
+
+      const div = fixtureEl.querySelector('div')
+      const popover = new Popover(div, {
+        placement: 'top'
+      })
+      expect(Popover.getInstance(div)).toEqual(popover)
+
+      const popover2 = Popover.getOrCreateInstance(div, {
+        placement: 'bottom'
+      })
+      expect(popover).toBeInstanceOf(Popover)
+      expect(popover2).toEqual(popover)
+
+      expect(popover2._config.placement).toEqual('top')
+    })
+  })
+
+  describe('dismiss on next click', () => {
+    it('should not hide when focus moves into the popover', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#" tabindex="0">Dismissible</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        const popover = new Popover(popoverEl, {
+          trigger: 'focus',
+          html: true,
+          content: '<a href="#inside" class="inside-link">Inside</a>'
+        })
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          const tip = document.querySelector('.popover')
+          const insideLink = tip.querySelector('.inside-link')
+          const leaveSpy = spyOn(popover, '_leave').and.callThrough()
+
+          popoverEl.dispatchEvent(new FocusEvent('focusout', {
+            bubbles: true,
+            relatedTarget: insideLink
+          }))
+
+          expect(leaveSpy).toHaveBeenCalled()
+          expect(popover._activeTrigger.focus).toBeTrue()
+          expect(tip).toHaveClass('show')
+          resolve()
+        })
+
+        popoverEl.dispatchEvent(createEvent('focusin'))
+      })
+    })
+
+    it('should hide when focus leaves the trigger for outside content', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#" tabindex="0">Dismissible</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        // eslint-disable-next-line no-new
+        new Popover(popoverEl, {
+          trigger: 'focus',
+          content: 'Selectable text'
+        })
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          popoverEl.addEventListener('hidden.bs.popover', () => {
+            expect(document.querySelector('.popover')).toBeNull()
+            resolve()
+          })
+
+          popoverEl.dispatchEvent(new FocusEvent('focusout', {
+            bubbles: true,
+            relatedTarget: document.body
+          }))
+        })
+
+        popoverEl.dispatchEvent(createEvent('focusin'))
+      })
+    })
+
+    it('should stay open when the pointer presses inside the tip', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#" tabindex="0">Dismissible</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        const popover = new Popover(popoverEl, {
+          trigger: 'focus',
+          content: 'Selectable text'
+        })
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          const tip = document.querySelector('.popover')
+          const body = tip.querySelector('.popover-body')
+
+          body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+          popoverEl.dispatchEvent(new FocusEvent('focusout', {
+            bubbles: true,
+            relatedTarget: null
+          }))
+
+          expect(popover._activeTrigger.focus).toBeTrue()
+          expect(tip).toHaveClass('show')
+          resolve()
+        })
+
+        popoverEl.dispatchEvent(createEvent('focusin'))
+      })
+    })
+
+    it('should dismiss on pointerdown outside the tip after tip interaction', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#" tabindex="0">Dismissible</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        // eslint-disable-next-line no-new
+        new Popover(popoverEl, {
+          trigger: 'focus',
+          content: 'Selectable text'
+        })
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          const tip = document.querySelector('.popover')
+          const body = tip.querySelector('.popover-body')
+
+          popoverEl.addEventListener('hidden.bs.popover', () => {
+            expect(document.querySelector('.popover')).toBeNull()
+            resolve()
+          })
+
+          body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+          popoverEl.dispatchEvent(new FocusEvent('focusout', {
+            bubbles: true,
+            relatedTarget: null
+          }))
+          document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))
+          document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+        })
+
+        popoverEl.dispatchEvent(createEvent('focusin'))
+      })
+    })
+
+    it('should allow focusable tip content to receive focus without dismissing', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#" tabindex="0">Dismissible</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        const popover = new Popover(popoverEl, {
+          trigger: 'focus',
+          html: true,
+          content: '<a href="#action" class="inside-link">Action</a>'
+        })
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          const tip = document.querySelector('.popover')
+          const link = tip.querySelector('.inside-link')
+
+          popoverEl.dispatchEvent(new FocusEvent('focusout', {
+            bubbles: true,
+            relatedTarget: link
+          }))
+
+          expect(popover._activeTrigger.focus).toBeTrue()
+          expect(tip).toHaveClass('show')
+          resolve()
+        })
+
+        popoverEl.dispatchEvent(createEvent('focusin'))
+      })
+    })
+
+    it('should hide when focus leaves focusable tip content for outside content', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#" tabindex="0">Dismissible</a>'
+
+        const popoverEl = fixtureEl.querySelector('a')
+        // eslint-disable-next-line no-new
+        new Popover(popoverEl, {
+          trigger: 'focus',
+          html: true,
+          content: '<a href="#action" class="inside-link">Action</a>'
+        })
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          const tip = document.querySelector('.popover')
+
+          popoverEl.addEventListener('hidden.bs.popover', () => {
+            expect(document.querySelector('.popover')).toBeNull()
+            resolve()
+          })
+
+          tip.dispatchEvent(new FocusEvent('focusout', {
+            bubbles: true,
+            relatedTarget: document.body
+          }))
+        })
+
+        popoverEl.dispatchEvent(createEvent('focusin'))
+      })
+    })
+  })
+
+  describe('data-api', () => {
+    it('should toggle popover on click via data-api', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<a href="#" data-bs-toggle="popover" title="Popover Title" data-bs-content="Popover content">Click me</a>'
+
+        const popoverEl = fixtureEl.querySelector('[data-bs-toggle="popover"]')
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          expect(document.querySelector('.popover')).not.toBeNull()
+          resolve()
+        })
+
+        popoverEl.click()
+      })
+    })
+
+    it('should do nothing when clicking on element without data-bs-toggle', () => {
+      fixtureEl.innerHTML = '<a href="#" title="Not a popover">Click me</a>'
+
+      const linkEl = fixtureEl.querySelector('a')
+      linkEl.click()
+
+      expect(document.querySelector('.popover')).toBeNull()
+      expect(Popover.getInstance(linkEl)).toBeNull()
+    })
+
+    it('should show popover on focusin via data-api', () => {
+      return new Promise(resolve => {
+        fixtureEl.innerHTML = '<button data-bs-toggle="popover" data-bs-trigger="focus" title="Popover Title" data-bs-content="Popover content">Focus me</button>'
+
+        const popoverEl = fixtureEl.querySelector('[data-bs-toggle="popover"]')
+
+        popoverEl.addEventListener('shown.bs.popover', () => {
+          expect(document.querySelector('.popover')).not.toBeNull()
+          resolve()
+        })
+
+        const focusEvent = createEvent('focusin')
+        popoverEl.dispatchEvent(focusEvent)
+      })
+    })
+
+    it('should prevent default on click via data-api', () => {
+      fixtureEl.innerHTML = '<a href="#test" data-bs-toggle="popover" title="Popover Title" data-bs-content="Popover content">Click me</a>'
+
+      const popoverEl = fixtureEl.querySelector('[data-bs-toggle="popover"]')
+      const clickEvent = createEvent('click')
+      const preventDefaultSpy = spyOn(clickEvent, 'preventDefault').and.callThrough()
+
+      popoverEl.dispatchEvent(clickEvent)
+
+      expect(preventDefaultSpy).toHaveBeenCalled()
+    })
+  })
+})

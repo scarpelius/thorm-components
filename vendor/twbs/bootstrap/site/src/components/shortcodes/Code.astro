@@ -1,0 +1,18 @@
+---
+import SharedCode from '@twbs/bui/components/Code'
+import { getConfig } from '@libs/config'
+import { replaceConfigInText } from '@libs/remark'
+
+const config = getConfig()
+---
+
+<SharedCode
+  {...Astro.props}
+  rootDir={process.cwd()}
+  repositoryUrl={config.repo}
+  repositoryRef={`v${config.current_version}`}
+  transformCode={replaceConfigInText}
+>
+  <slot />
+  <slot name="actions" slot="actions" />
+</SharedCode>

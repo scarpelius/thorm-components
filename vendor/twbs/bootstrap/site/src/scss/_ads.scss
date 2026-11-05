@@ -1,0 +1,25 @@
+@use "../../../scss/mixins/border-radius" as *;
+
+// stylelint-disable selector-max-id, declaration-no-important
+
+@layer custom {
+  #carbon-responsive .carbon-responsive-wrap {
+    padding: 1rem !important;
+    border: 0 !important;
+    @include border-radius(var(--radius-7) !important);
+  }
+  .carbon-img {
+    position: relative;
+    overflow: hidden;
+    @include border-radius(var(--radius-5));
+
+    &::after {
+      position: absolute;
+      inset: 0;
+      display: block;
+      content: "";
+      border: 1px solid var(--bs-border-color-translucent);
+      @include border-radius(var(--radius-5));
+    }
+  }
+}

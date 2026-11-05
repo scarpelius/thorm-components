@@ -1,0 +1,18 @@
+//
+// Footer
+//
+
+@layer custom {
+  .bd-footer {
+    a {
+      color: var(--bs-body-color);
+      text-decoration: none;
+
+      &:hover,
+      &:focus {
+        color: var(--bs-link-hover-color);
+        text-decoration: underline;
+      }
+    }
+  }
+}

@@ -1,0 +1,49 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "12:00"
+      timezone: Europe/Athens
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+  - package-ecosystem: npm
+    directory: "/"
+    labels:
+      - dependencies
+      - v6
+    schedule:
+      interval: weekly
+      day: tuesday
+      time: "12:00"
+      timezone: Europe/Athens
+    cooldown:
+      default-days: 7
+    versioning-strategy: increase
+    rebase-strategy: disabled
+    ignore:
+      - dependency-name: "prettier-plugin-astro"
+        update-types:
+          - "version-update:semver-major"
+      # Rolldown is pinned exactly on purpose while it is still release-candidate
+      # software. Review each bump by hand.
+      - dependency-name: "rolldown"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      - dependency-name: "stylelint"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+      development-dependencies:
+        dependency-type: "development"

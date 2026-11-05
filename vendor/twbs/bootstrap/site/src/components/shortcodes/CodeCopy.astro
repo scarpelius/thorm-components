@@ -1,0 +1,49 @@
+---
+import { highlightCode } from '@twbs/bui/shiki'
+
+interface Props {
+  /**
+   * The code to highlight.
+   */
+  code: string
+  /**
+   * The language to use for highlighting.
+   * @default 'bash'
+   */
+  lang?: string
+}
+
+const { code, lang = 'bash' } = Astro.props
+
+const highlightedCode = await highlightCode(code, lang)
+---
+
+<script>
+  import { initCopyButtons } from '@twbs/bui/browser/clipboard'
+
+  const copyButtonSelector = '.code-copy [data-bd-clipboard]'
+
+  initCopyButtons(
+    copyButtonSelector,
+    (trigger) => {
+      return trigger.closest('.code-copy')?.querySelector('.astro-code')?.textContent?.trim() || ''
+    },
+    {
+      successClass: 'fg-success',
+      successLabel: 'Install command copied'
+    }
+  )
+
+  document.querySelectorAll<HTMLElement>(copyButtonSelector).forEach((button) => {
+    button.addEventListener('pointerup', () => button.blur())
+  })
+</script>
+
+<div class="code-copy">
+  <Fragment set:html={highlightedCode} />
+  <button type="button" class="btn btn-xs btn-icon bg-transparent" title="Copy" data-bd-clipboard>
+    <svg class="bi fs-md" aria-hidden="true">
+      <use href="#copy"></use>
+    </svg>
+  </button>
+</div>

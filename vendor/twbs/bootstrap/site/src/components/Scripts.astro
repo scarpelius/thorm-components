@@ -1,0 +1,18 @@
+---
+import type { Layout } from '@libs/layout'
+import DocsScripts from './DocsScripts.astro'
+
+interface Props {
+  layout: Layout
+}
+
+const { layout } = Astro.props
+---
+
+<script>
+  import application from '../assets/application.js'
+
+  application()
+</script>
+
+<DocsScripts />

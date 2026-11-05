@@ -1,0 +1,214 @@
+---
+import type { MarkdownHeading } from 'astro'
+import type { CollectionEntry } from 'astro:content'
+import { getConfig } from '@libs/config'
+import type { LayoutOverridesHTMLAttributes } from '@libs/layout'
+import { getSlug, processMarkdownToHtml } from '@libs/utils'
+import { getVersionedDocsPath } from '@libs/path'
+import Ads from '@components/Ads.astro'
+import BaseLayout from '@layouts/BaseLayout.astro'
+import DocsSidebar from '@components/DocsSidebar.astro'
+import TableOfContents from '@components/TableOfContents.astro'
+import ReferenceTable from '@components/ReferenceTable.astro'
+import UtilityReferenceTable from '@components/UtilityReferenceTable.astro'
+import HelperReferenceTable from '@components/HelperReferenceTable.astro'
+import { getData, type SidebarItem, type SidebarSubItem } from '@libs/data'
+import CloseButton from '@components/shortcodes/CloseButton.astro'
+import PageMeta from '@components/PageMeta.astro'
+
+interface NavigationPage {
+  title: string
+  url: string
+  groupTitle: string
+}
+
+interface Props {
+  frontmatter: CollectionEntry<'docs'>['data']
+  headings?: MarkdownHeading[]
+  id: CollectionEntry<'docs'>['id']
+}
+
+// Get sidebar data using the data library
+const sidebar = getData('sidebar')
+
+const { frontmatter, headings, id } = Astro.props
+const { slug } = Astro.params
+
+// Extract the directory/section from the ID (format: "directory/filename.mdx")
+const parentDirectory = id.includes('/') ? id.split('/')[0] : ''
+
+const bodyProps: LayoutOverridesHTMLAttributes<'body'> = {}
+
+if (frontmatter.toc) {
+  bodyProps['data-bs-spy'] = 'scroll'
+  bodyProps['data-bs-target'] = '#TableOfContents'
+  // Align the activation line with the sticky navbar offset (--bd-navbar-offset
+  // is 5.75rem ~= 92px) so a heading highlights right as it settles below the
+  // navbar, plus a small epsilon. A fixed px value avoids the viewport-height
+  // drift of a percentage-based top margin.
+  bodyProps['data-bs-top-margin'] = '96px'
+}
+
+// Find previous and next pages for navigation
+let prevPage: NavigationPage | undefined
+let nextPage: NavigationPage | undefined
+
+// Create a flat array of all pages with their groups, handling nested groups
+const allPages: NavigationPage[] = sidebar.flatMap((group) => {
+  if (!group.pages) return []
+  return group.pages.flatMap((item: SidebarItem) => {
+    // Handle nested groups (e.g., Utilities > Borders > Border)
+    if (item.group && item.pages) {
+      const subgroupTitle = item.group
+      return item.pages.map((page: SidebarSubItem) => ({
+        title: page.title,
+        url: `/docs/${getConfig().docs_version}/${getSlug(group.title)}/${getSlug(page.title)}/`,
+        groupTitle: subgroupTitle
+      }))
+    }
+    // Handle direct pages
+    if (item.title) {
+      return [
+        {
+          title: item.title,
+          url: `/docs/${getConfig().docs_version}/${getSlug(group.title)}/${getSlug(item.title)}/`,
+          groupTitle: group.title
+        }
+      ]
+    }
+    return []
+  })
+})
+
+// Find the current page index
+const currentPageIndex = allPages.findIndex((page) => page.url === `/docs/${getConfig().docs_version}/${slug}/`)
+
+if (currentPageIndex > 0) {
+  prevPage = allPages[currentPageIndex - 1]
+}
+
+if (currentPageIndex < allPages.length - 1) {
+  nextPage = allPages[currentPageIndex + 1]
+}
+---
+
+<BaseLayout {...Astro.props} layout="docs" overrides={{ body: bodyProps }}>
+  <div slot="main" class="2xl:container bd-gutter mt-3 md:my-4 bd-layout">
+    <aside class="bd-sidebar">
+      <dialog class="lg:drawer drawer-bottom" tabindex="-1" id="bdSidebar" aria-labelledby="bdSidebarDrawerLabel">
+        <div class="drawer-header border-bottom">
+          <h5 class="drawer-title" id="bdSidebarDrawerLabel">Browse docs</h5>
+          <CloseButton dismiss="drawer" target="#bdSidebar" />
+        </div>
+
+        <div class="drawer-body">
+          <DocsSidebar />
+        </div>
+      </dialog>
+    </aside>
+
+    <main class="bd-main order-1">
+      <div class="bd-intro pt-5 md:pt-2 lg:ps-2">
+        <h1 class="bd-title mb-0" id="content">{frontmatter.title}</h1>
+        <div class="bd-subtitle">
+          {frontmatter.description && <Fragment set:html={processMarkdownToHtml(frontmatter.description)} />}
+        </div>
+        <div class="mb-3 md:mb-0 d-flex gap-2 text-nowrap">
+          <PageMeta frontmatter={frontmatter} id={id} parentDirectory={parentDirectory} />
+        </div>
+      </div>
+
+      <div class="lg:d-none d-flex justify-content-center bd-toc-toggle">
+        <button
+          class="btn-solid theme-inverse rounded-pill px-5 fs-sm"
+          type="button"
+          data-bs-toggle="drawer"
+          data-bs-target="#bdTocSidebar"
+          aria-controls="bdTocSidebar"
+        >
+          <svg class="bi" aria-hidden="true"><use href="#list"></use></svg>
+          On this page…
+        </button>
+      </div>
+
+      <div class="bd-toc mt-3 mb-5 lg:my-0 lg:mb-5 sm:px-1">
+        <dialog class="lg:drawer drawer-bottom" tabindex="-1" id="bdTocSidebar" aria-labelledby="bdTocDrawerLabel">
+          <div class="drawer-header border-bottom">
+            <h5 class="drawer-title" id="bdTocDrawerLabel">On this page</h5>
+            <CloseButton dismiss="drawer" target="#bdTocSidebar" />
+          </div>
+
+          <div class="drawer-body">
+            {
+              frontmatter.toc && headings && (
+                <nav id="TableOfContents" aria-label="Table of contents">
+                  <TableOfContents headings={headings} />
+                </nav>
+              )
+            }
+          </div>
+        </dialog>
+        <Ads />
+      </div>
+
+      <div class="bd-content prose lg:ps-2 lg:pt-4" data-pagefind-body>
+        {
+          frontmatter.sections && (
+            <div class="grid grid-cols-1 lg:grid-cols-3 mb-5">
+              {frontmatter.sections.map((section) => (
+                <a
+                  class="d-block text-decoration-none bg-1 hover-bg-2 rounded-3 p-3"
+                  href={getVersionedDocsPath(
+                    `${parentDirectory ? parentDirectory + '/' : ''}${getSlug(section.title)}/`
+                  )}
+                >
+                  <strong class="d-block mb-0">{section.title}</strong>
+                  <span class="fg-3">{section.description}</span>
+                </a>
+              ))}
+            </div>
+          )
+        }
+
+        {frontmatter.reference && <ReferenceTable reference={frontmatter.reference} />}
+
+        {frontmatter.utility && <UtilityReferenceTable utility={frontmatter.utility} />}
+
+        {frontmatter.classes && <HelperReferenceTable classes={frontmatter.classes} />}
+
+        <slot />
+
+        <nav class="bd-links-nav py-9 mt-9 border-top">
+          <div class="d-flex flex-column md:flex-row justify-content-stretch gap-3 md:gap-5 lh-1">
+            {
+              prevPage && (
+                <a
+                  href={prevPage.url}
+                  class="d-flex flex-column gap-2 p-5 text-decoration-none border rounded-5 flex-grow-1"
+                  rel="prev"
+                >
+                  <div class="fg-3">← Previous</div>
+                  <div class="fw-semibold">{prevPage.title}</div>
+                  <div class="fg-3">{prevPage.groupTitle}</div>
+                </a>
+              )
+            }
+            {
+              nextPage && (
+                <a
+                  href={nextPage.url}
+                  class="d-flex flex-column gap-2 p-5 text-decoration-none text-end border rounded-5 flex-grow-1"
+                  rel="next"
+                >
+                  <div class="fg-3">Next →</div>
+                  <div class="fw-semibold">{nextPage.title}</div>
+                  <div class="fg-3">{nextPage.groupTitle}</div>
+                </a>
+              )
+            }
+          </div>
+        </nav>
+      </div>
+    </main>
+  </div>
+</BaseLayout>

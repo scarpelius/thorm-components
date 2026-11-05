@@ -1,0 +1,333 @@
+---
+import { getData } from '@libs/data'
+import Example from '@components/shortcodes/Example.astro'
+
+const themeColors = getData('theme-colors')
+const styles = ['styled', 'solid', 'outline', 'subtle', 'text']
+const sizes = [
+  { value: 'xs', label: 'Extra small' },
+  { value: 'sm', label: 'Small' },
+  { value: '', label: 'Medium' },
+  { value: 'lg', label: 'Large' }
+]
+const rounded = ['default', 'pill', 'square']
+---
+
+<svg xmlns="http://www.w3.org/2000/svg" class="d-none">
+  <symbol id="arrow-left" viewBox="0 0 16 16">
+    <path
+      fill-rule="evenodd"
+      d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8"
+    ></path>
+  </symbol>
+  <symbol id="arrow-right" viewBox="0 0 16 16">
+    <path
+      fill-rule="evenodd"
+      d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"
+    ></path>
+  </symbol>
+  <symbol id="plus-lg" viewBox="0 0 16 16">
+    <path
+      fill-rule="evenodd"
+      d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"></path>
+  </symbol>
+</svg>
+
+<div class="bg-1 p-3 fs-sm rounded-3">
+  <div class="d-flex flex-wrap gap-3">
+    <div class="vstack gap-1">
+      <label class="form-label fw-semibold mb-0">Color</label>
+      <div>
+        <button
+          type="button"
+          class="btn-outline theme-secondary btn-sm w-100 justify-content-between"
+          id="btn-color-menu"
+          data-bs-toggle="menu"
+          aria-expanded="false"
+          data-color="primary"
+        >
+          <span>Primary</span>
+          <svg class="bi ms-1" width="16" height="16" aria-hidden="true">
+            <use href="#chevron-expand"></use>
+          </svg>
+        </button>
+        <div class="menu">
+          {
+            themeColors.map((themeColor) => (
+              <a
+                class:list={['menu-item', { active: themeColor.name === 'primary' }]}
+                href="#"
+                data-color={themeColor.name}
+                data-selected={themeColor.name === 'primary'}
+              >
+                {themeColor.title}
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="vstack gap-1 flex-grow-0">
+      <label class="form-label fw-semibold mb-0">Style</label>
+      <div class="btn-group text-capitalize btn-group-sm" role="group" aria-label="Button style">
+        {
+          styles.map((style) => (
+            <label class="btn-check btn-outline theme-secondary">
+              <input type="radio" name="btn-style" value={style} checked={style === 'styled'} data-style={style} />
+              {style || 'default'}
+            </label>
+          ))
+        }
+      </div>
+    </div>
+
+    <div class="vstack gap-1">
+      <label class="form-label fw-semibold mb-0">Size</label>
+      <div>
+        <button
+          type="button"
+          class="btn-outline theme-secondary btn-sm w-100 justify-content-between"
+          id="btn-size-menu"
+          data-bs-toggle="menu"
+          aria-expanded="false"
+          data-size=""
+        >
+          <span>Medium</span>
+          <svg class="bi ms-1" width="16" height="16" aria-hidden="true">
+            <use href="#chevron-expand"></use>
+          </svg>
+        </button>
+        <div class="menu">
+          {
+            sizes.map((size) => (
+              <a
+                class:list={['menu-item', { active: size.value === '' }]}
+                href="#"
+                data-size={size.value}
+                data-selected={size.value === ''}
+              >
+                {size.label}
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="vstack gap-1 flex-grow-0">
+      <label class="form-label fw-semibold mb-0">Rounded</label>
+      <div class="btn-group text-capitalize btn-group-sm" role="group" aria-label="Button rounded">
+        {
+          rounded.map((round) => (
+            <label class="btn-check btn-outline theme-secondary">
+              <input type="radio" name="btn-rounded" value={round} checked={round === 'default'} data-rounded={round} />
+              {round}
+            </label>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<Example
+  class="d-flex flex-wrap align-items-start gap-2"
+  code={`<button type="button" class="btn-solid theme-primary btn-sm" data-button-type="text">Button</button>
+<button type="button" class="btn-solid theme-primary" data-button-type="left-icon">
+  <svg class="bi" width="16" height="16" aria-hidden="true">
+    <use href="#arrow-left" />
+  </svg>
+  Left icon
+</button>
+<button type="button" class="btn-solid theme-primary btn-sm" data-button-type="right-icon">
+  Right icon
+  <svg class="bi" width="16" height="16" aria-hidden="true">
+    <use href="#arrow-right" />
+  </svg>
+</button>
+<button type="button" class="btn-solid btn-icon theme-primary btn-sm" data-button-type="icon-only" aria-label="Icon only">
+  <svg class="bi" width="16" height="16" aria-hidden="true">
+    <use href="#plus-lg" />
+  </svg>
+</button>`}
+  id="button-preview"
+/>
+
+<script>
+  import { Menu } from '@bootstrap'
+  import { highlightCode } from '@twbs/bui/shiki'
+
+  const colorMenuButton = document.querySelector('#btn-color-menu') as HTMLButtonElement
+  const colorMenuItems = document.querySelectorAll('#btn-color-menu + .menu .menu-item')
+  const sizeMenuButton = document.querySelector('#btn-size-menu') as HTMLButtonElement
+  const sizeMenuItems = document.querySelectorAll('#btn-size-menu + .menu .menu-item')
+  const styleInputs = document.querySelectorAll('input[name="btn-style"]')
+  const roundedInputs = document.querySelectorAll('input[name="btn-rounded"]')
+  const previewButtons = document.querySelectorAll('#button-preview button')
+  // Find the code snippet pre element inside the Example component
+  let codeSnippetPre = document
+    .querySelector('#button-preview')
+    ?.closest('.bd-example-snippet')
+    ?.querySelector('.astro-code') as HTMLElement | null
+
+  // Get all theme color names for removal
+  const themeColorNames = Array.from(colorMenuItems).map((item) => (item as HTMLElement).dataset.color || '')
+
+  function generateHTML(button: HTMLElement): string {
+    const classes = Array.from(button.classList)
+      .filter((cls) => cls === 'btn' || cls.startsWith('btn-') || cls.startsWith('theme-') || cls.startsWith('rounded'))
+      .join(' ')
+    const buttonType = button.getAttribute('data-button-type')
+    const ariaLabel = button.getAttribute('aria-label')
+
+    let html = `<button type="button" class="${classes}"`
+    if (ariaLabel) {
+      html += ` aria-label="${ariaLabel}"`
+    }
+    html += '>'
+
+    if (buttonType === 'text') {
+      html += '\n  Click me'
+    } else if (buttonType === 'left-icon') {
+      html +=
+        '\n  <svg class="bi me-1" width="16" height="16" aria-hidden="true">\n    <use href="#arrow-left" />\n  </svg>\n  With left icon'
+    } else if (buttonType === 'right-icon') {
+      html +=
+        'With right icon\n  <svg class="bi ms-1" width="16" height="16" aria-hidden="true">\n    <use href="#arrow-right" />\n  </svg>'
+    } else if (buttonType === 'icon-only') {
+      html += '\n  <svg class="bi" width="16" height="16" aria-hidden="true">\n    <use href="#plus-lg" />\n  </svg>'
+    }
+
+    html += '\n</button>'
+    return html
+  }
+
+  async function updateCodeSnippet() {
+    if (!codeSnippetPre) return
+
+    const htmlSnippets = Array.from(previewButtons).map((button) => generateHTML(button as HTMLElement))
+    const htmlCode = htmlSnippets.join('\n\n')
+
+    const highlighted = await highlightCode(htmlCode, 'html')
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(highlighted, 'text/html')
+    const newPre = doc.querySelector('pre')
+    if (newPre) {
+      codeSnippetPre.replaceWith(newPre)
+      codeSnippetPre = newPre
+    }
+  }
+
+  function updateButtons() {
+    const selectedColor = colorMenuButton?.dataset.color || 'primary'
+    const selectedStyle =
+      (document.querySelector('input[name="btn-style"]:checked') as HTMLInputElement)?.value || 'solid'
+    const selectedSize = sizeMenuButton?.dataset.size || ''
+    const selectedRounded =
+      (document.querySelector('input[name="btn-rounded"]:checked') as HTMLInputElement)?.value || 'default'
+
+    previewButtons.forEach((button) => {
+      // Remove all theme color classes
+      themeColorNames.forEach((color) => button.classList.remove(`theme-${color}`))
+      // Add selected theme color
+      button.classList.add(`theme-${selectedColor}`)
+
+      // Remove all style classes (including btn-styled)
+      button.classList.remove('btn-solid', 'btn-styled', 'btn-outline', 'btn-subtle', 'btn-text')
+      // Add selected style - styled is btn-solid + btn-styled
+      if (selectedStyle === 'styled') {
+        button.classList.add('btn-solid', 'btn-styled')
+      } else if (selectedStyle) {
+        button.classList.add(`btn-${selectedStyle}`)
+      } else {
+        button.classList.add('btn-solid')
+      }
+
+      // Remove all size classes
+      button.classList.remove('btn-xs', 'btn-sm', 'btn-lg')
+      // Add selected size (only if not empty)
+      if (selectedSize) {
+        button.classList.add(`btn-${selectedSize}`)
+      }
+
+      // Handle rounded - remove all rounded classes first
+      const roundedClasses = ['rounded-pill', 'rounded-0', 'rounded']
+      roundedClasses.forEach((cls) => button.classList.remove(cls))
+
+      if (selectedRounded === 'pill') {
+        button.classList.add('rounded-pill')
+      } else if (selectedRounded === 'square') {
+        button.classList.add('rounded-0')
+      }
+      // default uses the default border-radius from CSS variables
+    })
+
+    // Update code snippet
+    updateCodeSnippet()
+  }
+
+  if (colorMenuButton) {
+    const colorMenu = Menu.getOrCreateInstance(colorMenuButton)
+
+    colorMenuItems.forEach((item) => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault()
+        const colorName = (item as HTMLElement).dataset.color || 'primary'
+        const colorTitle = item.textContent?.trim() || 'Primary'
+
+        const labelSpan = colorMenuButton.querySelector('span')
+        if (labelSpan) labelSpan.textContent = colorTitle
+        colorMenuButton.dataset.color = colorName
+
+        colorMenuItems.forEach((i) => {
+          i.classList.remove('active')
+          i.setAttribute('data-selected', 'false')
+        })
+        item.classList.add('active')
+        item.setAttribute('data-selected', 'true')
+
+        colorMenu.hide()
+        updateButtons()
+      })
+    })
+  }
+
+  if (sizeMenuButton) {
+    const sizeMenu = Menu.getOrCreateInstance(sizeMenuButton)
+
+    sizeMenuItems.forEach((item) => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault()
+        const sizeValue = (item as HTMLElement).dataset.size || ''
+        const sizeLabel = item.textContent?.trim() || 'Medium'
+
+        const labelSpan = sizeMenuButton.querySelector('span')
+        if (labelSpan) labelSpan.textContent = sizeLabel
+        sizeMenuButton.dataset.size = sizeValue
+
+        sizeMenuItems.forEach((i) => {
+          i.classList.remove('active')
+          i.setAttribute('data-selected', 'false')
+        })
+        item.classList.add('active')
+        item.setAttribute('data-selected', 'true')
+
+        sizeMenu.hide()
+        updateButtons()
+      })
+    })
+  }
+
+  styleInputs.forEach((input) => {
+    input.addEventListener('change', updateButtons)
+  })
+
+  roundedInputs.forEach((input) => {
+    input.addEventListener('change', updateButtons)
+  })
+
+  // Initial update
+  updateButtons()
+  updateCodeSnippet()
+</script>

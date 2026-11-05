@@ -1,0 +1,52 @@
+---
+import type { CollectionEntry } from 'astro:content'
+import SharedHeader from '@twbs/bui/components/Header'
+import type { NavigationConfig } from '@twbs/bui'
+import { getConfig } from '@libs/config'
+import { getVersionedDocsPath } from '@libs/path'
+import type { Layout } from '@libs/layout'
+
+interface Props {
+  addedIn?: CollectionEntry<'docs'>['data']['added']
+  layout: Layout
+  title: string
+}
+
+const { layout, title } = Astro.props
+const { slug, version } = Astro.params
+const site = getConfig()
+
+let versionsLink = ''
+if (layout === 'docs' && version === site.docs_version) {
+  versionsLink = `${slug}/`
+} else if (layout === 'single' && Astro.url.pathname.startsWith(getVersionedDocsPath(''))) {
+  versionsLink = Astro.url.pathname.replace(getVersionedDocsPath(''), '')
+}
+
+const activeSection = !layout ? 'home' : title === 'Examples' ? 'examples' : 'docs'
+const config: NavigationConfig = {
+  activeSection,
+  brandHref: '/',
+  homeHref: '/',
+  docsHref: getVersionedDocsPath('getting-started/install/'),
+  examplesHref: site.examples,
+  iconsHref: site.icons,
+  blogHref: site.blog,
+  githubHref: site.github_org,
+  openCollectiveHref: site.opencollective,
+  xHref: `https://x.com/${site.x}`,
+  currentVersion: site.docs_version,
+  currentVersionHref: Astro.url.pathname === '/' ? '/' : `/docs/${site.docs_version}/${versionsLink}`,
+  previousVersions: [
+    { label: 'v5.3.x', href: 'https://getbootstrap.com/docs/5.3/', note: 'Latest' },
+    { label: 'v4.6.x', href: 'https://getbootstrap.com/docs/4.6/' },
+    { label: 'v3.4.1', href: 'https://getbootstrap.com/docs/3.4/' },
+    { label: 'v2.3.2', href: 'https://getbootstrap.com/2.3.2/' }
+  ],
+  allVersionsHref: '/docs/versions/',
+  searchPlaceholder: 'Search docs…',
+  docsDrawer: layout === 'docs'
+}
+---
+
+<SharedHeader config={config} docs={layout === 'docs'} symbols={false} />

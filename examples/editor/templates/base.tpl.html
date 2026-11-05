@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{$title}</title>
+<link href="/css/bootstrap.min.css" rel="stylesheet">
+<link href="/css/editor.css" rel="stylesheet">
+</head>
+<body>
+<div id="{$containerId}" class="container my-12"></div>
+<script>
+    window.__THORM_DEV__ = true;
+</script>
+<script type="module">
+    import { mount } from '/runtime/index.js';
+
+    const RT = (async function () {
+        const res = await fetch('{$iruri_dir}{$iruri}', { cache: 'no-store' });
+        const ir = await res.json();
+        const x = mount(ir, document.getElementById('app'));
+        const atoms = x?.core?.store?.atoms;
+        const subs = x?.core?.store?.subs;
+        const notify = typeof x?.core?.store?.notify === 'function'
+            ? x.core.store.notify.bind(x.core.store)
+            : (typeof x?.core?.notify === 'function'
+                ? x.core.notify.bind(x.core.notify)
+                : null)
+        return {
+            atoms:  atoms ?? null,
+            subs:   subs  ?? null,
+            notify: notify
+        };
+    })();
+    RT.then(result => {
+        window.__THORM_RUNTIME__ = result;
+        import('/runtime/devtools/devtools.js');
+        return result;
+    });
+</script>
+</body>
+</html>

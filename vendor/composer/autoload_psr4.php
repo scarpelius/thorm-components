@@ -6,6 +6,7 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
+    'Thorm\\Components\\Editor\\Widgets\\' => array($baseDir . '/editor/src/php/widgets'),
     'Thorm\\Components\\Editor\\Examples\\' => array($baseDir . '/examples/editor'),
     'Thorm\\Components\\Editor\\' => array($baseDir . '/editor/src/php'),
     'Thorm\\' => array($vendorDir . '/bitforge/thorm/src/php'),

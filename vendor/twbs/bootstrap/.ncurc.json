@@ -1,0 +1,8 @@
+{
+  "reject": [
+    "hammer-simulator",
+    "prettier-plugin-astro",
+    "rolldown",
+    "stylelint"
+  ]
+}

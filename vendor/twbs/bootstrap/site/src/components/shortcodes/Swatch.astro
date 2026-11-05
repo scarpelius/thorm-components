@@ -1,0 +1,259 @@
+---
+export interface Props {
+  bg: string
+  fg?: string
+  size?: 'inline' | 'medium' | 'large'
+  contrast?: string
+  contrastDark?: string
+  showVar?: boolean
+}
+
+const { bg, fg, size = 'inline', contrast, contrastDark, showVar = true } = Astro.props
+
+// Styles for different sizes
+const baseStyles = {
+  display: 'inline-flex',
+  color: `var(--bs-${fg})`,
+  backgroundColor: `var(--bs-${bg})`,
+  boxShadow: 'inset 0 0 0 1px light-dark(rgb(0 0 0 / .1), rgb(255 255 255 / .1))'
+}
+
+const sizeStyles = {
+  inline: {
+    verticalAlign: 'text-bottom',
+    width: '1rem',
+    height: '1rem',
+    borderRadius: 'var(--bs-radius-3)'
+  },
+  medium: {
+    width: '100%',
+    paddingBlock: '1.5rem',
+    borderRadius: 'var(--bs-radius-5)'
+  },
+  large: {
+    width: '100%',
+    paddingBlock: '.5rem',
+    paddingInline: '1rem',
+    borderRadius: 'var(--bs-radius-7)'
+  }
+}
+
+// Parse contrast ratios and determine if they're below 4.5
+const contrastRatio = contrast ? parseFloat(contrast) : null
+const contrastDarkRatio = contrastDark ? parseFloat(contrastDark) : null
+const isLowContrast = contrastRatio !== null && contrastRatio < 4.5
+const isLowContrastDark = contrastDarkRatio !== null && contrastDarkRatio < 4.5
+
+const contrastStyles = {
+  marginLeft: 'auto',
+  opacity: 0.5,
+  fontSize: '.75rem',
+  fontFamily: 'var(--bs-font-monospace)',
+  color: isLowContrast ? 'red' : 'inherit'
+}
+
+const combinedStyles = { ...baseStyles, ...sizeStyles[size] }
+
+// Use bg prop as the CSS variable name
+const displayCssVar = bg
+---
+
+<style>
+  /* Show light contrast by default and in light mode */
+  .contrast-light {
+    display: inline;
+  }
+
+  .contrast-dark {
+    display: none;
+  }
+
+  /* Show dark contrast in dark mode */
+  :global([data-bs-theme='dark']) .contrast-light {
+    display: none;
+  }
+
+  :global([data-bs-theme='dark']) .contrast-dark {
+    display: inline;
+  }
+
+  /* CSS variable display styles */
+  .css-var {
+    margin-left: 0.25rem;
+    color: var(--bs-fg-3);
+  }
+
+  .css-var-light {
+    display: inline;
+  }
+
+  .css-var-dark {
+    display: none;
+  }
+
+  /* Show dark value in dark mode */
+  :global([data-bs-theme='dark']) .css-var-light {
+    display: none;
+  }
+
+  :global([data-bs-theme='dark']) .css-var-dark {
+    display: inline;
+  }
+</style>
+
+{
+  size === 'inline' ? (
+    <>
+      <span style={combinedStyles}>
+        <slot />
+        {contrast && (
+          <span style={contrastStyles} class="contrast-light">
+            {contrast}
+          </span>
+        )}
+        {contrastDark && (
+          <span style={{ ...contrastStyles, color: isLowContrastDark ? 'red' : 'inherit' }} class="contrast-dark">
+            {contrastDark}
+          </span>
+        )}
+      </span>
+      {showVar && displayCssVar && (
+        <code class="css-var" data-css-var={`--bs-${displayCssVar}`}>
+          <span class="css-var-light">Loading...</span>
+          <span class="css-var-dark">Loading...</span>
+        </code>
+      )}
+    </>
+  ) : size === 'large' ? (
+    <span style={combinedStyles}>
+      <slot />
+      {contrast && (
+        <span style={contrastStyles} class="contrast-light">
+          {contrast}
+        </span>
+      )}
+      {contrastDark && (
+        <span style={{ ...contrastStyles, color: isLowContrastDark ? 'red' : 'inherit' }} class="contrast-dark">
+          {contrastDark}
+        </span>
+      )}
+    </span>
+  ) : (
+    <div style={combinedStyles}>
+      <slot />
+      {contrast && (
+        <span style={contrastStyles} class="contrast-light">
+          {contrast}
+        </span>
+      )}
+      {contrastDark && (
+        <span style={{ ...contrastStyles, color: isLowContrastDark ? 'red' : 'inherit' }} class="contrast-dark">
+          {contrastDark}
+        </span>
+      )}
+    </div>
+  )
+}
+
+<script>
+  // Return the arguments inside a function call, e.g. light-dark(a, b) => "a, b".
+  function extractArgs(value: string, fnName: string): string | null {
+    const start = value.indexOf(`${fnName}(`)
+    if (start === -1) return null
+
+    const contentStart = start + fnName.length + 1
+    let depth = 0
+    for (let i = contentStart - 1; i < value.length; i++) {
+      if (value[i] === '(') depth++
+      else if (value[i] === ')') {
+        depth--
+        if (depth === 0) return value.slice(contentStart, i)
+      }
+    }
+    return null
+  }
+
+  // Split a comma list at the top level, ignoring commas nested in parens.
+  function splitTopLevel(input: string): string[] {
+    const parts: string[] = []
+    let depth = 0
+    let current = ''
+    for (const char of input) {
+      if (char === '(') depth++
+      else if (char === ')') depth--
+      if (char === ',' && depth === 0) {
+        parts.push(current.trim())
+        current = ''
+      } else {
+        current += char
+      }
+    }
+    if (current.trim()) parts.push(current.trim())
+    return parts
+  }
+
+  // Compact for display: unwrap var(--token) to --token, collapse spaces.
+  function prettifyValue(value: string): string {
+    return value
+      .replace(/var\(\s*(--[\w-]+)\s*\)/g, '$1')
+      .replace(/\s+/g, ' ')
+      .trim()
+  }
+
+  // Handle dynamic CSS variable display with light-dark() function support
+  document.addEventListener('DOMContentLoaded', () => {
+    const cssVarElements = document.querySelectorAll('.css-var[data-css-var]')
+
+    cssVarElements.forEach((element) => {
+      const cssVarName = element.getAttribute('data-css-var')
+
+      if (cssVarName) {
+        // Try to get the raw CSS variable definition from stylesheets
+        let rawValue = null
+        for (const stylesheet of document.styleSheets) {
+          try {
+            for (const rule of stylesheet.cssRules) {
+              if (rule.type === CSSRule.STYLE_RULE) {
+                const styleRule = rule as CSSStyleRule
+                for (const prop of styleRule.style) {
+                  if (prop === cssVarName) {
+                    rawValue = styleRule.style.getPropertyValue(cssVarName)
+                    break
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            // Skip stylesheets we can't access (CORS)
+            continue
+          }
+        }
+
+        // If we couldn't get the raw value, fall back to computed value
+        if (!rawValue) {
+          rawValue = getComputedStyle(document.documentElement).getPropertyValue(cssVarName)
+        }
+
+        if (rawValue) {
+          const args = rawValue.includes('light-dark(') ? extractArgs(rawValue, 'light-dark') : null
+          const parts = args ? splitTopLevel(args) : []
+
+          if (parts.length === 2) {
+            // Show the light value in light mode and the dark value in dark mode
+            const lightSpan = element.querySelector('.css-var-light')
+            const darkSpan = element.querySelector('.css-var-dark')
+
+            if (lightSpan) lightSpan.textContent = prettifyValue(parts[0])
+            if (darkSpan) darkSpan.textContent = prettifyValue(parts[1])
+          } else {
+            // Single value (including color-mix) - show it as-is
+            element.innerHTML = `<span class="css-var-light">${prettifyValue(rawValue)}</span>`
+          }
+        } else {
+          // Fallback: show the variable name
+          element.innerHTML = `<span class="css-var-light">${cssVarName}</span>`
+        }
+      }
+    })
+  })
+</script>

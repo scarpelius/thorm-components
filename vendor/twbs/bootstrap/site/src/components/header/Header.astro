@@ -1,0 +1,17 @@
+---
+import type { CollectionEntry } from 'astro:content'
+import type { Layout } from '@libs/layout'
+import Symbols from '@components/icons/Symbols.astro'
+import Navigation from '@components/header/Navigation.astro'
+
+interface Props {
+  addedIn?: CollectionEntry<'docs'>['data']['added']
+  layout: Layout
+  title: string
+}
+
+const { addedIn, layout, title } = Astro.props
+---
+
+<Symbols />
+<Navigation layout={layout} title={title} addedIn={addedIn} />

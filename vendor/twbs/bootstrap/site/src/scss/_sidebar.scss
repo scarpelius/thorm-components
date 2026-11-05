@@ -1,0 +1,77 @@
+@use "../../../scss/layout/breakpoints" as *;
+
+@layer custom {
+  .bd-sidebar {
+    font-size: var(--font-size-sm);
+
+    @include media-breakpoint-up(lg) {
+      position: sticky;
+      top: var(--bd-navbar-offset);
+      // Override collapse behaviors
+      // stylelint-disable-next-line declaration-no-important
+      display: block !important;
+      height: calc(100vh - 8.5rem);
+      // Prevent focus styles to be cut off:
+      padding-inline-start: .25rem;
+      margin-inline-start: -.25rem;
+      overflow-y: auto;
+    }
+
+    @include media-breakpoint-down(lg) {
+      .lg\:drawer {
+        height: auto;
+        max-height: 90dvh;
+        border-inline-end-color: var(--bs-border-color);
+        box-shadow: var(--bs-box-shadow-lg);
+      }
+    }
+  }
+
+  .bd-links {
+    .nav {
+      --bs-nav-gap: 2px;
+      --bs-nav-link-justify: flex-start;
+      --bs-nav-link-font-size: var(--font-size-sm);
+      --bs-nav-link-padding-x: .75rem;
+      --bs-nav-link-padding-y: .25rem;
+      margin-top: .25rem;
+    }
+
+    .nav-link {
+      margin-inline-start: .75rem;
+    }
+
+    @include media-breakpoint-between(xs, lg) {
+      column-count: 2;
+      column-gap: 1.5rem;
+
+      .bd-links-group {
+        break-inside: avoid;
+      }
+
+      .bd-links-span-all {
+        column-span: all;
+      }
+    }
+  }
+
+  .bd-links-heading {
+    gap: .25rem;
+    color: var(--bs-fg-body);
+  }
+  .bd-links-heading .bi {
+    width: 16px;
+    height: 16px;
+  }
+
+  .bd-links-subgroup {
+    margin-inline-start: 1.5rem;
+    color: var(--bs-fg-body);
+  }
+
+  .bd-links .badge {
+    min-height: 0;
+    padding: .125rem .375rem;
+    font-size: .625rem;
+  }
+}

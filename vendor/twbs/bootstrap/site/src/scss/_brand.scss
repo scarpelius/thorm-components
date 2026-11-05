@@ -1,0 +1,40 @@
+@use "../../../scss/layout/breakpoints" as *;
+@use "variables" as *;
+
+//
+// Brand guidelines
+//
+
+@layer custom {
+  //
+  // Color swatches
+  //
+
+  .color-swatches {
+    margin: 0 -5px;
+
+    // Docs colors
+    .bd-purple {
+      background-color: $bd-purple;
+    }
+    .bd-purple-light {
+      background-color: $bd-purple-light;
+    }
+    .bd-purple-lighter {
+      background-color: #e5e1ea;
+    }
+    .bd-gray {
+      background-color: #f9f9f9;
+    }
+  }
+
+  .color-swatch {
+    width: 4rem;
+    height: 4rem;
+
+    @include media-breakpoint-up(md) {
+      width: 6rem;
+      height: 6rem;
+    }
+  }
+}

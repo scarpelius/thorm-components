@@ -1,0 +1,165 @@
+import Button from '../../src/button.js'
+import { clearFixture, getFixture } from '../helpers/fixture.js'
+
+describe('Button', () => {
+  let fixtureEl
+
+  beforeAll(() => {
+    fixtureEl = getFixture()
+  })
+
+  afterEach(() => {
+    clearFixture()
+  })
+
+  it('should take care of element either passed as a CSS selector or DOM element', () => {
+    fixtureEl.innerHTML = '<button data-bs-toggle="button">Placeholder</button>'
+    const buttonEl = fixtureEl.querySelector('[data-bs-toggle="button"]')
+    const buttonBySelector = new Button('[data-bs-toggle="button"]')
+    expect(buttonBySelector._element).toEqual(buttonEl)
+
+    const buttonByElement = new Button(buttonEl)
+    expect(buttonByElement._element).toEqual(buttonEl)
+  })
+
+  describe('VERSION', () => {
+    it('should return plugin version', () => {
+      expect(Button.VERSION).toEqual(jasmine.any(String))
+    })
+  })
+
+  describe('DATA_KEY', () => {
+    it('should return plugin data key', () => {
+      expect(Button.DATA_KEY).toEqual('bs.button')
+    })
+  })
+
+  describe('data-api', () => {
+    it('should toggle active class on click', () => {
+      fixtureEl.innerHTML = [
+        '<button class="btn" data-bs-toggle="button">btn</button>',
+        '<button class="btn testParent" data-bs-toggle="button"><div class="test"></div></button>'
+      ].join('')
+
+      const btn = fixtureEl.querySelector('.btn')
+      const divTest = fixtureEl.querySelector('.test')
+      const btnTestParent = fixtureEl.querySelector('.testParent')
+
+      expect(btn).not.toHaveClass('active')
+
+      btn.click()
+
+      expect(btn).toHaveClass('active')
+
+      btn.click()
+
+      expect(btn).not.toHaveClass('active')
+
+      divTest.click()
+
+      expect(btnTestParent).toHaveClass('active')
+    })
+  })
+
+  describe('toggle', () => {
+    it('should toggle aria-pressed', () => {
+      fixtureEl.innerHTML = '<button class="btn" data-bs-toggle="button" aria-pressed="false"></button>'
+
+      const btnEl = fixtureEl.querySelector('.btn')
+      const button = new Button(btnEl)
+
+      expect(btnEl.getAttribute('aria-pressed')).toEqual('false')
+      expect(btnEl).not.toHaveClass('active')
+
+      button.toggle()
+
+      expect(btnEl.getAttribute('aria-pressed')).toEqual('true')
+      expect(btnEl).toHaveClass('active')
+    })
+
+    it('should set aria-pressed when the attribute is missing', () => {
+      fixtureEl.innerHTML = '<button class="btn" data-bs-toggle="button"></button>'
+
+      const btnEl = fixtureEl.querySelector('.btn')
+
+      btnEl.click()
+
+      expect(btnEl.getAttribute('aria-pressed')).toEqual('true')
+    })
+  })
+
+  describe('DOMContentLoaded', () => {
+    it('should add a missing aria-pressed based on the active class', () => {
+      fixtureEl.innerHTML = [
+        '<button class="btn" data-bs-toggle="button">btn</button>',
+        '<button class="btn active" data-bs-toggle="button">active btn</button>',
+        '<button class="btn" data-bs-toggle="button" aria-pressed="true">pre-set btn</button>'
+      ].join('')
+
+      const [defaultBtn, activeBtn, preSetBtn] = fixtureEl.querySelectorAll('.btn')
+
+      document.dispatchEvent(new Event('DOMContentLoaded'))
+
+      expect(defaultBtn.getAttribute('aria-pressed')).toEqual('false')
+      expect(activeBtn.getAttribute('aria-pressed')).toEqual('true')
+      expect(preSetBtn.getAttribute('aria-pressed')).toEqual('true')
+    })
+  })
+
+  describe('dispose', () => {
+    it('should dispose a button', () => {
+      fixtureEl.innerHTML = '<button class="btn" data-bs-toggle="button"></button>'
+
+      const btnEl = fixtureEl.querySelector('.btn')
+      const button = new Button(btnEl)
+
+      expect(Button.getInstance(btnEl)).not.toBeNull()
+
+      button.dispose()
+
+      expect(Button.getInstance(btnEl)).toBeNull()
+    })
+  })
+
+  describe('getInstance', () => {
+    it('should return button instance', () => {
+      fixtureEl.innerHTML = '<div></div>'
+
+      const div = fixtureEl.querySelector('div')
+      const button = new Button(div)
+
+      expect(Button.getInstance(div)).toEqual(button)
+      expect(Button.getInstance(div)).toBeInstanceOf(Button)
+    })
+
+    it('should return null when there is no button instance', () => {
+      fixtureEl.innerHTML = '<div></div>'
+
+      const div = fixtureEl.querySelector('div')
+
+      expect(Button.getInstance(div)).toBeNull()
+    })
+  })
+
+  describe('getOrCreateInstance', () => {
+    it('should return button instance', () => {
+      fixtureEl.innerHTML = '<div></div>'
+
+      const div = fixtureEl.querySelector('div')
+      const button = new Button(div)
+
+      expect(Button.getOrCreateInstance(div)).toEqual(button)
+      expect(Button.getInstance(div)).toEqual(Button.getOrCreateInstance(div, {}))
+      expect(Button.getOrCreateInstance(div)).toBeInstanceOf(Button)
+    })
+
+    it('should return new instance when there is no button instance', () => {
+      fixtureEl.innerHTML = '<div></div>'
+
+      const div = fixtureEl.querySelector('div')
+
+      expect(Button.getInstance(div)).toBeNull()
+      expect(Button.getOrCreateInstance(div)).toBeInstanceOf(Button)
+    })
+  })
+})

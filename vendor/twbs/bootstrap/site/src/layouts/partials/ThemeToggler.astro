@@ -1,0 +1,12 @@
+---
+import type { Layout } from '@libs/layout'
+import ThemeToggle from '@twbs/bui/components/ThemeToggle'
+
+interface Props {
+  layout: Layout
+}
+
+const { layout } = Astro.props
+---
+
+<ThemeToggle compact={layout === 'examples'} placement={layout === 'examples' ? 'top-end' : 'bottom-end'} />

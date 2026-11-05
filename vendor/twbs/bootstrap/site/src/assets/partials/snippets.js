@@ -1,0 +1,229 @@
+// NOTICE: Embedded as-is into StackBlitz playgrounds via `?raw` import.
+// Adapt to your needs in real projects.
+
+/*
+ * JavaScript for Bootstrap's docs (https://getbootstrap.com/)
+ * Copyright 2011-2026 The Bootstrap Authors
+ * Licensed under the Creative Commons Attribution 3.0 Unported License.
+ * For details, see https://creativecommons.org/licenses/by/3.0/.
+ */
+
+import {
+  Tooltip,
+  Popover,
+  Toast,
+  Carousel
+} from '@bootstrap'
+
+export default () => {
+  // --------
+  // Tooltips
+  // --------
+  // Instantiate all tooltips in a docs or StackBlitz
+  document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    .forEach(tooltip => {
+      new Tooltip(tooltip)
+    })
+
+  // --------
+  // Popovers
+  // --------
+  // Instantiate all popovers in docs or StackBlitz
+  document.querySelectorAll('[data-bs-toggle="popover"]')
+    .forEach(popover => {
+      new Popover(popover)
+    })
+
+  // -------------------------------
+  // Toasts
+  // -------------------------------
+  // Used by 'Placement' example in docs or StackBlitz
+  const toastPlacement = document.getElementById('toastPlacement')
+  if (toastPlacement) {
+    document.getElementById('selectToastPlacement').addEventListener('change', function () {
+      if (!toastPlacement.dataset.originalClass) {
+        toastPlacement.dataset.originalClass = toastPlacement.className
+      }
+
+      toastPlacement.className = `${toastPlacement.dataset.originalClass} ${this.value}`
+    })
+  }
+
+  // Instantiate all toasts in docs pages only
+  // Skip toasts inside <dialog> elements; those are shown explicitly
+  // via their own trigger (e.g. the "Show toast" button in the dialog
+  // overlays example) and shouldn't auto-appear when the dialog opens.
+  document.querySelectorAll('.bd-example .toast')
+    .forEach(toastNode => {
+      if (toastNode.closest('dialog')) {
+        return
+      }
+
+      const toast = new Toast(toastNode, {
+        autohide: false
+      })
+
+      toast.show()
+    })
+
+  // Instantiate all toasts in docs pages only
+  // js-docs-start live-toast
+  const toastTrigger = document.getElementById('liveToastBtn')
+  const toastLiveExample = document.getElementById('liveToast')
+
+  if (toastTrigger) {
+    const toastBootstrap = Toast.getOrCreateInstance(toastLiveExample)
+    toastTrigger.addEventListener('click', () => {
+      toastBootstrap.show()
+    })
+  }
+  // js-docs-end live-toast
+
+  // Replay the sliding toast on the Transitions page
+  const slideToastTrigger = document.getElementById('slideToastBtn')
+  const slideToastEl = document.getElementById('slideToast')
+
+  if (slideToastTrigger) {
+    const slideToast = Toast.getOrCreateInstance(slideToastEl, { autohide: false })
+    slideToastTrigger.addEventListener('click', async () => {
+      await slideToast.hide()
+      slideToast.show()
+    })
+  }
+
+  const dialogToastTrigger = document.getElementById('dialogToastBtn')
+  const dialogToastEl = document.getElementById('dialogToast')
+
+  if (dialogToastTrigger) {
+    const dialogToast = Toast.getOrCreateInstance(dialogToastEl)
+    dialogToastTrigger.addEventListener('click', () => {
+      dialogToast.show()
+    })
+  }
+
+  // -------------------------------
+  // Alerts
+  // -------------------------------
+  // Used in 'Show live alert' example in docs or StackBlitz
+
+  // js-docs-start live-alert
+  const alertPlaceholder = document.getElementById('liveAlertPlaceholder')
+  const appendAlert = (message, type) => {
+    const wrapper = document.createElement('div')
+    wrapper.innerHTML = [
+      `<div class="alert theme-${type}" role="alert">`,
+      `   <p>${message}</p>`,
+      '   <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>',
+      '</div>'
+    ].join('')
+
+    alertPlaceholder.append(wrapper)
+  }
+
+  const alertTrigger = document.getElementById('liveAlertBtn')
+  if (alertTrigger) {
+    alertTrigger.addEventListener('click', () => {
+      appendAlert('Nice, you triggered this alert message!', 'success')
+    })
+  }
+  // js-docs-end live-alert
+
+  // -------------------------------
+  // Accordion expand / collapse all
+  // -------------------------------
+  // js-docs-start accordion-expand-collapse
+  const accordion = document.getElementById('accordionExpandCollapse')
+  const toggleBtn = document.getElementById('btnAccordionToggleAll')
+
+  if (accordion && toggleBtn) {
+    const items = accordion.querySelectorAll('.accordion-item')
+    const groupName = 'accordionExpandCollapse'
+
+    toggleBtn.addEventListener('click', () => {
+      const expand = toggleBtn.getAttribute('aria-expanded') !== 'true'
+
+      for (const item of items) {
+        if (expand) {
+          item.removeAttribute('name')
+          item.open = true
+        } else {
+          item.open = false
+          item.setAttribute('name', groupName)
+        }
+      }
+
+      toggleBtn.setAttribute('aria-expanded', String(expand))
+      toggleBtn.textContent = expand ? 'Collapse all' : 'Expand all'
+    })
+  }
+  // js-docs-end accordion-expand-collapse
+
+  // --------
+  // Carousels
+  // --------
+  // Instantiate all non-autoplaying carousels in docs or StackBlitz
+  document.querySelectorAll('.carousel:not([data-bs-autoplay="true"])')
+    .forEach(carousel => {
+      Carousel.getOrCreateInstance(carousel)
+    })
+
+  // -------------------------------
+  // Checks & Radios
+  // -------------------------------
+  // Indeterminate checkbox example in docs and StackBlitz
+  document.querySelectorAll('.bd-example-indeterminate [type="checkbox"]')
+    .forEach(checkbox => {
+      if (checkbox.id.includes('Indeterminate')) {
+        checkbox.indeterminate = true
+      }
+    })
+
+  // -------------------------------
+  // Links
+  // -------------------------------
+  // Disable empty links in docs examples only
+  document.querySelectorAll('.bd-content [href="#"]')
+    .forEach(link => {
+      link.addEventListener('click', event => {
+        event.preventDefault()
+      })
+    })
+
+  // -------------------------------
+  // Drawer
+  // -------------------------------
+  // 'Drawer components' example in docs only
+  const myDrawer = document.querySelectorAll('.bd-example-drawer .drawer')
+  if (myDrawer) {
+    myDrawer.forEach(drawer => {
+      drawer.addEventListener('show.bs.drawer', event => {
+        event.preventDefault()
+      }, false)
+    })
+  }
+
+  // -------------------------------
+  // Motion utilities
+  // -------------------------------
+  // Replay the one-shot animation utilities (.animation-shake, .animation-pop)
+  // in docs demos by removing and re-adding the class after a reflow. The
+  // trigger typically lives in the Example toolbar via its `actions` slot.
+  document.querySelectorAll('[data-bd-replay]')
+    .forEach(trigger => {
+      const target = document.querySelector(trigger.getAttribute('data-bd-replay'))
+      if (!target) {
+        return
+      }
+
+      const animationClass = [...target.classList].find(name => name.startsWith('animation-'))
+      if (!animationClass) {
+        return
+      }
+
+      trigger.addEventListener('click', () => {
+        target.classList.remove(animationClass)
+        target.offsetHeight // eslint-disable-line no-unused-expressions
+        target.classList.add(animationClass)
+      })
+    })
+}

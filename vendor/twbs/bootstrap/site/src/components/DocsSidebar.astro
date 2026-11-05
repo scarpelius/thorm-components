@@ -1,0 +1,132 @@
+---
+import { getData, type SidebarItem, type SidebarSubItem } from '@libs/data'
+import { getConfig } from '@libs/config'
+import { docsPages, getDocsPageSlug } from '@libs/content'
+import { getSlug } from '@libs/utils'
+import NewBadge from '@components/NewBadge.astro'
+
+const sidebar = getData('sidebar')
+---
+
+<nav class="nav vstack bd-links w-100 pb-3 md:pb-2 lg:pe-2" id="bd-docs-nav" aria-label="Docs navigation">
+  {
+    sidebar.map((group) => {
+      const groupSlug = getSlug(group.title)
+
+      if (group.pages) {
+        return (
+          <div class="vstack bd-links-group py-2">
+            <strong class="bd-links-heading d-flex w-100 align-items-center fw-semibold">
+              {group.icon && (
+                <svg
+                  class="bi me-1"
+                  style={
+                    group.icon_color &&
+                    `color: light-dark(var(--bs-${group.icon_color}-500), var(--bs-${group.icon_color}-400));`
+                  }
+                  aria-hidden="true"
+                >
+                  <use href={`#${group.icon}`} />
+                </svg>
+              )}
+              {group.title}
+            </strong>
+            <ul class="nav flex-column bd-links-nav">
+              {group.pages?.map((item: SidebarItem) => {
+                // Handle sub-groups
+                if (item.group && item.pages) {
+                  return (
+                    <>
+                      <li class="bd-links-subgroup fw-semibold mt-3">{item.group}</li>
+                      {item.pages.map((page: SidebarSubItem) => {
+                        const docSlug = getSlug(page.title)
+                        const unversionedPageSlug = `${groupSlug}/${docSlug}`
+
+                        const url = `/docs/${getConfig().docs_version}/${unversionedPageSlug}`
+                        const active = Astro.params.slug === unversionedPageSlug
+
+                        const generatedPage = docsPages.find((page) => getDocsPageSlug(page.id) === unversionedPageSlug)
+
+                        // This test should not be necessary, see comments for `getSlug()` in `src/libs/utils.ts`.
+                        if (!generatedPage) {
+                          throw new Error(
+                            `The page '${page.title}' referenced in 'site/data/sidebar.yml' does not exist at '${url}'.`
+                          )
+                        }
+
+                        const addedMeta = page.meta?.find((m) => m.added)
+
+                        return (
+                          <li>
+                            <a
+                              href={url}
+                              class:list={['nav-link bd-links-link border-0', { active }]}
+                              aria-current={active ? 'page' : undefined}
+                            >
+                              {page.title}
+                              {addedMeta && <NewBadge version={addedMeta.added} />}
+                            </a>
+                          </li>
+                        )
+                      })}
+                    </>
+                  )
+                }
+
+                // Handle regular pages
+                if (!item.title) {
+                  return null
+                }
+
+                const docSlug = getSlug(item.title)
+                const unversionedPageSlug = `${groupSlug}/${docSlug}`
+
+                const url = `/docs/${getConfig().docs_version}/${unversionedPageSlug}`
+                const active = Astro.params.slug === unversionedPageSlug
+
+                const generatedPage = docsPages.find((page) => getDocsPageSlug(page.id) === unversionedPageSlug)
+
+                // This test should not be necessary, see comments for `getSlug()` in `src/libs/utils.ts`.
+                if (!generatedPage) {
+                  throw new Error(
+                    `The page '${item.title}' referenced in 'site/data/sidebar.yml' does not exist at '${url}'.`
+                  )
+                }
+
+                const itemAddedMeta = item.meta?.find((m) => m.added)
+
+                return (
+                  <li>
+                    <a
+                      href={url}
+                      class:list={['nav-link bd-links-link border-0', { active }]}
+                      aria-current={active ? 'page' : undefined}
+                    >
+                      {item.title}
+                      {itemAddedMeta && <NewBadge version={itemAddedMeta.added} />}
+                    </a>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )
+      } else {
+        const active = Astro.params.slug === groupSlug
+
+        return (
+          <>
+            <div class="bd-links-span-all mt-1 mb-3 mx-4 border-top" />
+            <a
+              href={`/docs/${getConfig().docs_version}/${groupSlug}/`}
+              class:list={['bd-links-link bd-links-span-all', { active }]}
+              aria-current={active ? 'page' : undefined}
+            >
+              {group.title}
+            </a>
+          </>
+        )
+      }
+    })
+  }
+</nav>
