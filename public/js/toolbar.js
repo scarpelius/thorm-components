@@ -48,11 +48,18 @@ export function showToolbar(blockEl) {
     btn.type = 'button';
     btn.title = cmd.label;
     btn.textContent = cmd.label;
+    let savedRange = null;
+    btn.addEventListener('mousedown', (e) => {
+      // Save the selection on mousedown (before focus moves)
+      const selection = window.getSelection();
+      savedRange = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+    });
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       executeCommand(cmd.name, {
         blockId,
         documentStructure: window.documentStructure,
+        selectionRange: savedRange,
       });
     });
     toolbar.appendChild(btn);

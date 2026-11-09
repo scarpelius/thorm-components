@@ -157,3 +157,45 @@ test('clicking a toolbar command keeps contenteditable active', async ({ page })
   });
   expect(toolbarStillVisible).toBe(true);
 });
+
+test('bold command wraps selected text in <strong>', async ({ page }) => {
+  const baseUrl = 'http://localhost:47319';
+
+  await page.goto(baseUrl + '/phase2-js-editor/', { waitUntil: 'load' });
+  await page.waitForSelector('[data-block-id]', { timeout: 15000 });
+  await page.waitForTimeout(2000);
+
+  // Click a block to make it editable
+  await page.click('[data-block-id]', { timeout: 5000 });
+  await page.waitForTimeout(500);
+
+  // Select all text in the block using triple-click
+  await page.click('[data-block-id]', { timeout: 5000, tripleClick: true });
+  await page.waitForTimeout(300);
+
+  // Verify the selection exists
+  const selectionRange = await page.evaluate(() => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return null;
+    const range = sel.getRangeAt(0);
+    return {
+      commonAncestor: range.commonAncestorContainer.tagName,
+      startContainer: range.startContainer.nodeType,
+      endContainer: range.endContainer.nodeType,
+    };
+  });
+  console.log('Selection:', JSON.stringify(selectionRange));
+  expect(selectionRange).not.toBeNull();
+
+  // Click the Bold toolbar button
+  await page.click('.editor-toolbar button', { timeout: 5000 });
+  await page.waitForTimeout(500);
+
+  // Verify the selection was wrapped in <strong>
+  const hasStrong = await page.evaluate(() => {
+    const el = document.querySelector('[data-block-id]');
+    return el && el.querySelector('strong') !== null;
+  });
+  console.log('Has strong:', hasStrong);
+  expect(hasStrong).toBe(true);
+});

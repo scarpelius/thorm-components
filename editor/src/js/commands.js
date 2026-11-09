@@ -46,14 +46,24 @@ export function reRenderBlock(blockId, ir) {
   irToDom(ir, el);
 }
 
-function wrapSelectionInTag(tag) {
-  console.log(tag);
+function wrapSelectionInTag(tag, range = null) {
   const selection = window.getSelection();
+  if (range) {
+    // Use the saved range
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
   if (!selection || selection.rangeCount === 0) return;
-  const range = selection.getRangeAt(0);
-  const parent = range.commonAncestorContainer;
-  if (!parent || parent.nodeType !== 1) return;
-  let node = parent;
+  const rng = selection.getRangeAt(0);
+  const blockEl = document.querySelector('[contenteditable="true"]');
+  if (!blockEl) return;
+
+  // Ensure the selection is within the editable block
+  if (!blockEl.contains(rng.commonAncestorContainer)) return;
+
+  // If the selection is already inside the target tag, unwrap
+  let node = rng.commonAncestorContainer;
   while (node && node.nodeType === 1) {
     if (node.tagName.toLowerCase() === tag.toLowerCase()) {
       node.replaceChildren(...node.childNodes);
@@ -61,18 +71,65 @@ function wrapSelectionInTag(tag) {
     }
     node = node.parentElement;
   }
+
   const wrapper = document.createElement(tag);
-  range.surroundContents(wrapper);
-  return wrapper;
+  try {
+    rng.surroundContents(wrapper);
+  } catch {
+    // surroundContents fails if the range spans multiple top-level nodes
+    // or if the range is at the block boundary. Fallback: insert before the
+    // first node and wrap each node individually.
+    const firstNode = rng.startContainer;
+    const lastNode = rng.endContainer;
+    if (firstNode === lastNode) {
+      // Selection within a single text node
+      const parent = firstNode.parentElement;
+      const startOffset = rng.startOffset;
+      const endOffset = rng.endOffset;
+      const text = firstNode.textContent;
+      const before = text.substring(0, startOffset);
+      const selected = text.substring(startOffset, endOffset);
+      const after = text.substring(endOffset);
+      const frag = document.createDocumentFragment();
+      if (before) frag.appendChild(document.createTextNode(before));
+      wrapper.appendChild(document.createTextNode(selected));
+      if (after) frag.appendChild(document.createTextNode(after));
+      parent.replaceChild(frag, firstNode);
+    } else {
+      // Selection spans multiple nodes: wrap each node
+      const nodes = [];
+      let node = rng.startContainer;
+      const endNode = rng.endContainer;
+      while (node && node !== endNode.parentElement) {
+        if (node.nodeType === 1) nodes.push(node);
+        node = node.nextSibling || node.parentElement;
+      }
+      if (endNode.nodeType === 1) nodes.push(endNode);
+      if (nodes.length === 0) return;
+      const frag = document.createDocumentFragment();
+      nodes.forEach((n) => frag.appendChild(n));
+      rng.surroundContents(frag);
+      // Now wrap the fragment
+      wrapper.appendChild(document.createTextNode(''));
+      const parentFrag = frag;
+      const wrapperParent = frag.parentNode;
+      wrapperParent.insertBefore(wrapper, frag);
+      while (wrapper.firstChild) {
+        wrapper.appendChild(wrapper.firstChild);
+      }
+    }
+  }
 }
 
 export function applyTextCommand(commandName, context = {}) {
-  const { blockId } = context;
+  const { blockId, selectionRange } = context;
   const tag = commandName === 'bold' ? 'strong'
     : commandName === 'italic' ? 'em'
     : commandName === 'underline' ? 'u'
     : null;
-  if (tag) wrapSelectionInTag(tag);
+  if (tag) {
+    wrapSelectionInTag(tag, selectionRange);
+  }
   const el = document.querySelector(`[data-block-id="${blockId}"]`);
   if (el) {
     const ir = domToIR(el);
@@ -85,16 +142,20 @@ export function applyHeadingCommand(level, context = {}) {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) return;
   const range = selection.getRangeAt(0);
-  const parent = range.commonAncestorContainer;
-  let heading = parent;
-  while (heading && heading.nodeType === 1) {
-    if (/^h[1-6]$/.test(heading.tagName.toLowerCase())) {
+  const blockEl = document.querySelector(`[data-block-id="${blockId}"]`);
+  if (!blockEl) return;
+  if (!blockEl.contains(range.commonAncestorContainer)) return;
+
+  // Find the innermost block-level element in the selection
+  let node = range.commonAncestorContainer;
+  while (node && node.nodeType === 1) {
+    if (/^(h[1-6]|p|ul|ol|blockquote|pre|div)$/.test(node.tagName.toLowerCase())) {
       const newHeading = document.createElement(`h${level}`);
-      newHeading.innerHTML = heading.innerHTML;
-      heading.parentElement.replaceChild(newHeading, heading);
+      newHeading.innerHTML = node.innerHTML;
+      node.parentElement.replaceChild(newHeading, node);
       return;
     }
-    heading = heading.parentElement;
+    node = node.parentElement;
   }
 }
 
@@ -103,8 +164,24 @@ export function applyListCommand(listType, context = {}) {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) return;
   const range = selection.getRangeAt(0);
+  const blockEl = document.querySelector(`[data-block-id="${blockId}"]`);
+  if (!blockEl) return;
+  if (!blockEl.contains(range.commonAncestorContainer)) return;
+
   const parent = range.commonAncestorContainer;
-  let listParent = parent;
+
+  // Find the innermost block-level element
+  let node = parent;
+  while (node && node.nodeType === 1) {
+    if (/^(p|h[1-6]|ul|ol|blockquote|pre|div)$/.test(node.tagName.toLowerCase())) {
+      break;
+    }
+    node = node.parentElement;
+  }
+  if (!node || !node.parentElement) return;
+
+  // If already in a list, toggle between ul/ol
+  let listParent = node;
   while (listParent && listParent.nodeType === 1) {
     if (/^(ul|ol)$/.test(listParent.tagName.toLowerCase())) {
       const newTag = listType === 'ul' ? 'ol' : 'ul';
@@ -118,24 +195,13 @@ export function applyListCommand(listType, context = {}) {
     }
     listParent = listParent.parentElement;
   }
+
+  // Create a new list
+  const listEl = document.createElement(listType);
   const li = document.createElement('li');
-  li.textContent = parent.textContent;
-  let list = null;
-  let listParent2 = parent;
-  while (listParent2 && listParent2.nodeType === 1) {
-    if (/^(ul|ol)$/.test(listParent2.tagName.toLowerCase())) {
-      list = listParent2;
-      break;
-    }
-    listParent2 = listParent2.parentElement;
-  }
-  if (list) {
-    list.appendChild(li);
-  } else {
-    const listEl = document.createElement(listType);
-    listEl.appendChild(li);
-    parent.parentElement.replaceChild(listEl, parent);
-  }
+  li.innerHTML = node.innerHTML;
+  listEl.appendChild(li);
+  node.parentElement.replaceChild(listEl, node);
 }
 
 export function applyLinkCommand(context = {}) {
