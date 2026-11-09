@@ -6,8 +6,10 @@
     margin: 0.5rem 0;
     transition: border-color 0.15s ease;
 }
-[data-block-id]:hover,
-[data-block-id]:focus-within {
+[data-block-id]:hover {
+    border-color: #6c757d;
+}
+.editor-active {
     border-color: #6c757d;
     background-color: #fafafa;
     color: #080808;
@@ -24,9 +26,8 @@
 
 .editor-toolbar {
   position: absolute;
-  top: -40px;
-  left: 0;
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   background: #fff;
   border: 1px solid #ddd;
@@ -38,6 +39,7 @@
 .editor-toolbar button {
   border: none;
   background: transparent;
+  color:#080808;
   padding: 4px 8px;
   cursor: pointer;
   border-radius: 4px;

@@ -28,6 +28,7 @@ export const DEFAULT_COMMANDS = [
 
 let activeToolbar = null;
 let activeBlockId = null;
+let activeToolbarEl = null;
 
 /**
  * Show the floating toolbar for a block.
@@ -57,15 +58,17 @@ export function showToolbar(blockEl) {
     toolbar.appendChild(btn);
   }
 
-  // Position near the block
+  // Position the toolbar just above the block
   const rect = blockEl.getBoundingClientRect();
   const scrollX = window.scrollX;
   const scrollY = window.scrollY;
-  toolbar.style.top = `${rect.top - rect.height - 40 + scrollY}px`;
+  const toolbarHeight = toolbar.offsetHeight || 40;
+  toolbar.style.top = `${rect.top - toolbarHeight - 8 + scrollY}px`;
   toolbar.style.left = `${rect.left + scrollX}px`;
 
   document.body.appendChild(toolbar);
   activeToolbar = toolbar;
+  activeToolbarEl = toolbar;
 }
 
 /**
@@ -75,6 +78,7 @@ export function hideToolbar() {
   if (activeToolbar) {
     activeToolbar.remove();
     activeToolbar = null;
+    activeToolbarEl = null;
   }
   activeBlockId = null;
 }
@@ -89,4 +93,11 @@ export function toggleToolbar(blockEl) {
   } else {
     showToolbar(blockEl);
   }
+}
+
+/**
+ * Get the current toolbar DOM element (null if no toolbar is showing).
+ */
+export function getActiveToolbarEl() {
+  return activeToolbarEl;
 }

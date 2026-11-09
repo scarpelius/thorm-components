@@ -47,6 +47,7 @@ export function reRenderBlock(blockId, ir) {
 }
 
 function wrapSelectionInTag(tag) {
+  console.log(tag);
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) return;
   const range = selection.getRangeAt(0);

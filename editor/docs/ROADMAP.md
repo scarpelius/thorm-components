@@ -41,7 +41,7 @@ Phased roadmap for the Thorm-based browser text editor.
 
 ## In Progress
 
-### 🔄 Phase 2: JS Editor (Client-Side)
+### ✅ Phase 2: JS Editor (Client-Side)
 
 **Goal:** Build the JavaScript editor that operates on the IR tree in memory.
 
@@ -55,7 +55,7 @@ Phased roadmap for the Thorm-based browser text editor.
 | 2.6 Floating toolbar | Toolbar appears on focus, hides on blur | ✅ |
 | 2.7 Document structure | Parse document structure, maintain blockId → IR map | ✅ |
 | 2.8 New example | Phase 2 JS editor entry point | ✅ |
-| 2.9 Tests | jsdom unit tests + Playwright E2E tests | ⬜ |
+| 2.9 Tests | jsdom unit tests + Playwright E2E tests | ✅ |
 
 **Files:**
 - `editor/src/js/ir-parser.js` — `domToIR`, `irToDom`, `diffIR`, `idGenEl`, `idGenText`, `convertPropsToIR`
@@ -92,5 +92,4 @@ Phased roadmap for the Thorm-based browser text editor.
 
 ## Next Steps
 
-1. Start Phase 2 (JS editor).
-2. Start Phase 3 (save endpoint).
+1. Start Phase 3 (save endpoint).

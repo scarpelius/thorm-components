@@ -43,6 +43,9 @@
     // This avoids the timing issue where Thorm's ElMount appends a <script> element
     // before setting type="module", causing the browser to load it as a classic script.
     import { mountEditor } from '/js/editor.js';
+    // Fetch the editor state written by the PHP example, then mount the editor.
+    const stateRes = await fetch('editor-state.json', { cache: 'no-store' });
+    window.editorState = await stateRes.json();
     mountEditor();
 </script>
 </body>

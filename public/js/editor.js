@@ -3,14 +3,12 @@
  *
  * Mounts the editor on all [data-block-id] blocks.
  */
-console.log('[editor.js] module loaded');
 
 import { parseDocumentStructure } from './document-structure.js';
-import { showToolbar, hideToolbar } from './toolbar.js';
-import { enqueueChange, removeChange } from './change-queue.js';
-import { loadQueue } from './change-queue.js';
+import { showToolbar, hideToolbar, getActiveToolbarEl } from './toolbar.js';
+import { enqueueChange, removeChange, loadQueue } from './change-queue.js';
 import { domToIR, diffIR } from './ir-parser.js';
-import { getBlockCommandStack } from './commands.js';
+import { getBlockCommandStack, executeCommand } from './commands.js';
 
 let activeBlock = null;
 
@@ -29,12 +27,10 @@ function onFocusIn(blockEl) {
   if (activeBlock === blockEl) return;
   activeBlock = blockEl;
 
-  // Set contenteditable
+  // Set contenteditable and mark as active
   blockEl.setAttribute('contenteditable', 'true');
+  blockEl.classList.add('editor-active');
   showToolbar(blockEl);
-
-  // Keyboard shortcuts
-  blockEl.addEventListener('keydown', onKeydown, { once: true });
 }
 
 /**
@@ -45,8 +41,9 @@ function onFocusOut(blockEl) {
   if (activeBlock !== blockEl) return;
   activeBlock = null;
 
-  // Remove contenteditable
+  // Remove contenteditable and active class
   blockEl.removeAttribute('contenteditable');
+  blockEl.classList.remove('editor-active');
 
   // Serialize DOM back to IR
   const ir = domToIR(blockEl);
@@ -66,37 +63,6 @@ function onFocusOut(blockEl) {
 }
 
 /**
- * Handle keydown for undo/redo.
- */
-function onKeydown(e) {
-  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-  const key = isMac ? 'Meta' : 'Control';
-
-  if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
-    e.preventDefault();
-    executeCommand('undo', {
-      blockId: activeBlock.getAttribute('data-block-id'),
-      documentStructure: window.documentStructure,
-    });
-  } else if ((e.key === 'z' && (e.ctrlKey || e.metaKey) && e.shiftKey)) {
-    e.preventDefault();
-    executeCommand('redo', {
-      blockId: activeBlock.getAttribute('data-block-id'),
-      documentStructure: window.documentStructure,
-    });
-  }
-}
-
-import { executeCommand } from './commands.js';
-
-/**
- * Mark a block as dirty (input event).
- */
-function onInput(blockEl) {
-  // Just mark as dirty; actual serialization happens on blur
-}
-
-/**
  * Mount the editor on all [data-block-id] blocks.
  */
 export function mountEditor() {
@@ -113,16 +79,35 @@ export function mountEditor() {
       onFocusIn(blockEl);
     });
     blockEl.addEventListener('input', () => {
-      onInput(blockEl);
+      // Mark as dirty; actual serialization happens on blur
     });
-    // Use a delegated focusout on document
   }
 
-  // Delegated focusout
+  // Delegated focusout (capture phase — focusout does not bubble)
   document.addEventListener('focusout', (e) => {
+    // Ignore focusout when focus moves to the toolbar
+    const toolbarEl = getActiveToolbarEl();
+    if (toolbarEl && (
+      toolbarEl.contains(e.target) ||
+      (e.relatedTarget && toolbarEl.contains(e.relatedTarget))
+    )) return;
     const blockEl = e.target.closest ? e.target.closest('[data-block-id]') : null;
     if (blockEl) {
       onFocusOut(blockEl);
+    }
+  }, true);
+
+  // Click outside all blocks → deactivate the active block
+  document.addEventListener('click', (e) => {
+    if (!activeBlock) return;
+    // Ignore clicks inside the toolbar
+    const toolbarEl = getActiveToolbarEl();
+    if (toolbarEl && toolbarEl.contains(e.target)) return;
+    const clickedBlock = e.target.closest ? e.target.closest('[data-block-id]') : null;
+    if (clickedBlock === activeBlock) return; // still clicking inside the active block
+    if (clickedBlock === null) {
+      // Clicked outside all blocks
+      onFocusOut(activeBlock);
     }
   });
 
@@ -145,6 +130,3 @@ export function mountEditor() {
     }
   });
 }
-
-// Auto-mount when the module loads
-mountEditor();

@@ -34,22 +34,20 @@ foreach ($document->blocks as $block) {
     $blockStates = array_merge($blockStates, $node->getState());
 }
 
-// Embed editor state as an HTML fragment in the IR.
-// The html primitive renders raw HTML between comment anchors, so the script
-// content is set before the element is appended to the DOM, avoiding the
-// timing issue where Thorm's ElMount appends a <script> element before
-// setting its content.
-$editorScript = html('<script>window.editorState = ' . json_encode($blockStates, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ';</script>');
+// Write editor state to a JSON file for the client to fetch.
+// The ThormJS runtime does not have a "script" primitive, so embedding
+// a <script> tag in the IR via html() does not execute it. Instead we
+// write a static JSON file that the template's module script fetches
+// and assigns to window.editorState before mounting the editor.
+$publicDir = realpath(__DIR__ . '/../../public/') . '/';
+$statePath = $publicDir . 'phase2-js-editor/editor-state.json';
+file_put_contents($statePath, json_encode(['blocks' => $blockStates], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
-// The Phase 2 JS editor module is loaded AFTER the Thorm runtime has mounted
-// the DOM. We do this in the template (base.tpl.html) to avoid the timing issue
-// where Thorm's ElMount appends a <script> element before setting type="module".
-
+// Build the page IR tree (no embedded script needed)
 $app = fragment([
     h1([], [text('Editable Document (Phase 2 JS Editor)')]),
     p([], [text('Click on a block to edit it. Changes are saved every 60 seconds.')]),
     ...$blocks,
-    $editorScript,
 ]);
 
 $renderer = new Render();
@@ -57,12 +55,13 @@ $res = $renderer->render($app);
 
 $build = BuildExample::build([
     'name'       => 'phase2-js-editor',
-    'path'       => realpath(__DIR__ . '/../../public/') . '/',
+    'path'       => $publicDir,
     'renderer'   => $res,
     'template'   => __DIR__ . '/templates/phase2.tpl.html',
     'opts'       => [
         'title'       => 'Phase 2 JS Editor',
         'containerId' => 'app',
+        'statePath'   => 'editor-state.json',
     ],
 ]);
 
