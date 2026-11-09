@@ -1,0 +1,2 @@
+Before splitting a file into chunks, attempt to create it using a single editor operation. Split only if the editing tool actually reports a size limitation. Never assume that a file is too large merely because it contains many methods. If a tool call fails, inspect the error and do not repeat an identical call.
+For an existing file, editor() requires old_text containing the exact text to replace, or insert_line for insertion. Supplying only new_text is for creating a file that does not already exist. Never use empty old_text as a substitute for insertion.

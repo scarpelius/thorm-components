@@ -21,3 +21,28 @@
 [data-block-id] ol:last-child {
     margin-bottom: 0;
 }
+
+.editor-toolbar {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  display: flex;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 1000;
+}
+.editor-toolbar button {
+  border: none;
+  background: transparent;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.editor-toolbar button:hover {
+  background: #f0f0f0;
+}
+

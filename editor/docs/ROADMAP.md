@@ -47,11 +47,28 @@ Phased roadmap for the Thorm-based browser text editor.
 
 | Task | Description | Status |
 |------|-------------|--------|
-| 2.1 IR parser | Parse IR from embedded `<script>` tag, build DOM | ⬜ |
-| 2.2 Contenteditable integration | Wrap blocks, intercept `input`, update IR locally | ⬜ |
-| 2.3 Editor commands | `SetTextCommand`, `UpdateStyleCommand`, `InsertNodeCommand`, `RemoveNodeCommand`, `MoveNodeCommand` | ⬜ |
-| 2.4 Change queue | Queue changes, send to server every 60s | ⬜ |
-| 2.5 Undo/redo | Per-block `CommandStack`, structural ops at document level | ⬜ |
+| 2.1 IR parser | Parse IR from embedded `<script>` tag, build DOM | ✅ |
+| 2.2 Contenteditable integration | Wrap blocks, intercept `input`, update IR locally | ✅ |
+| 2.3 Editor commands | Text/structural commands + `executeCommand` | ✅ |
+| 2.4 Change queue | Queue changes, send to server every 60s | ✅ |
+| 2.5 Undo/redo | Per-block `CommandStack`, structural ops at document level | ✅ |
+| 2.6 Floating toolbar | Toolbar appears on focus, hides on blur | ✅ |
+| 2.7 Document structure | Parse document structure, maintain blockId → IR map | ✅ |
+| 2.8 New example | Phase 2 JS editor entry point | ✅ |
+| 2.9 Tests | jsdom unit tests + Playwright E2E tests | ⬜ |
+
+**Files:**
+- `editor/src/js/ir-parser.js` — `domToIR`, `irToDom`, `diffIR`, `idGenEl`, `idGenText`, `convertPropsToIR`
+- `editor/src/js/document-structure.js` — `parseDocumentStructure`, `applyStructuralChange`, `blockIdToIR`
+- `editor/src/js/undo-redo.js` — `CommandStack` (per-block + document-level)
+- `editor/src/js/commands.js` — text/structural commands + `executeCommand`
+- `editor/src/js/change-queue.js` — `enqueueChange`, `flushQueue`, 60s interval
+- `editor/src/js/save.js` — `saveChanges` (HTTP POST), `getDocId`
+- `editor/src/js/toolbar.js` — `showToolbar`, `hideToolbar`, `toggleToolbar`
+- `editor/src/js/editor.js` — `mountEditor` entry point
+- `editor/src/php/SaveHandler.php` — minimal save endpoint handler
+- `examples/editor/phase2-js-editor.php` — Phase 2 example entry point
+- `public/css/editor.css` — `.editor-toolbar` styles
 
 ## Not Started
 
