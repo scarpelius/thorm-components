@@ -2,9 +2,16 @@
 /**
  * Phase 2 — IR parser.
  *
- * Serializes a block's DOM content back into the editor IR format
- * (the array format used by IRToThorm.php on the server) and provides
- * IR→DOM build + shallow diff helpers for local re-rendering.
+ * Serializes a block's DOM content into the Thorm IR subtree format — the exact
+ * same representation the page is rendered from (the output of a Thorm node's
+ * jsonSerialize()). This is a *subtree of the IR*, not a separate "editor IR"
+ * representation, so the editor can save and restore from the identical IR.
+ *
+ * Thorm IR node payload shapes:
+ *   element: { k: 'el', tag: 'p', props: { attrs: {...}, cls: ..., style: {...}, on: [] }, children: [...] }
+ *   text:    { k: 'text', value: { k: 'val', v: '...' } }
+ *
+ * It also provides IR→DOM build + shallow diff helpers for local re-rendering.
  */
 
 const SKIP_TAG_NAMES = new Set(['script', 'style', 'template']);
@@ -26,8 +33,12 @@ export function resetIdCounters() {
   textCounter = 0;
 }
 
+/**
+ * Convert a DOM element's props into the Thorm IR props shape:
+ *   { attrs: {...}, cls: string|null, style: {...}, on: [] }
+ */
 export function convertPropsToIR(el) {
-  const props = { style: {}, class: '', attrs: {} };
+  const props = { attrs: {}, cls: null, style: {}, on: [] };
   if (el.style && el.style.length > 0) {
     for (let i = 0; i < el.style.length; i++) {
       const key = el.style[i].propertyName || el.style[i];
@@ -37,7 +48,7 @@ export function convertPropsToIR(el) {
       }
     }
   }
-  if (el.className) props.class = el.className;
+  if (el.className) props.cls = el.className;
   for (let i = 0; i < el.attributes.length; i++) {
     const attr = el.attributes[i];
     if (attr.name === 'class' || attr.name === 'style') continue;
@@ -47,7 +58,7 @@ export function convertPropsToIR(el) {
 }
 
 /**
- * Serialize a block's DOM content into the editor IR array format.
+ * Serialize a block's DOM content into the Thorm IR subtree array format.
  * @param {HTMLElement} el - The block's content div.
  * @param {boolean} [includeFragmentMarkers=false]
  * @returns {Array}
@@ -61,16 +72,23 @@ export function domToIR(el, includeFragmentMarkers = false) {
     } else if (node.nodeType === 3) {
       const value = node.textContent;
       if (value.length > 0) {
-        nodes.push({ id: idGenText(), k: 'text', value });
+        nodes.push(toTextIR(value));
       }
     } else if (node.nodeType === 8 && includeFragmentMarkers) {
       const text = node.data || '';
       if (text === 'fragment:start' || text === 'fragment:end') {
-        nodes.push({ id: idGenText(), k: 'text', value: `<!--${text}-->` });
+        nodes.push(toTextIR(`<!--${text}-->`));
       }
     }
   }
   return nodes;
+}
+
+/**
+ * Build a text IR node from a string value (Thorm IR: { k:'text', value: {k:'val', v} }).
+ */
+function toTextIR(value) {
+  return { id: idGenText(), k: 'text', value: { k: 'val', v: value } };
 }
 
 function convertElementToIR(el) {
@@ -89,7 +107,7 @@ function convertElementToIR(el) {
     } else if (child.nodeType === 3) {
       const value = child.textContent;
       if (value.length > 0) {
-        node.children.push({ id: idGenText(), k: 'text', value });
+        node.children.push(toTextIR(value));
       }
     }
   }
@@ -112,7 +130,7 @@ export function irToDom(ir, parent, includeFragmentMarkers = true) {
 
 function appendIRNodeToDom(parent, node, includeFragmentMarkers) {
   if (node.k === 'text') {
-    const value = node.value || '';
+    const value = textValue(node.value);
     if (includeFragmentMarkers && value.startsWith('<!--') && value.endsWith('-->')) {
       parent.appendChild(document.createComment(value.slice(4, -4)));
     } else {
@@ -128,7 +146,7 @@ function appendIRNodeToDom(parent, node, includeFragmentMarkers) {
         if (el.style[prop] !== undefined) el.style[prop] = value;
       }
     }
-    if (node.props.class) el.className = node.props.class;
+    if (node.props.cls) el.className = node.props.cls;
     if (node.props.attrs) {
       for (const [name, value] of Object.entries(node.props.attrs)) {
         el.setAttribute(name, value);
@@ -144,48 +162,61 @@ function appendIRNodeToDom(parent, node, includeFragmentMarkers) {
 }
 
 /**
- * Shallow per-node comparison of two IR arrays.
+ * Extract the plain string value from a Thorm IR text value. A text value is
+ * either a plain scalar (legacy editor IR) or a Thorm expression such as
+ * { k: 'val', v: '...' }.
+ */
+function textValue(value) {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object' && value.k === 'val') return String(value.v ?? '');
+  return String(value);
+}
+
+/**
+ * Compare two IR arrays positionally.
+ *
+ * The stored Thorm IR subtree carries no node ids (and each DOM serialization
+ * generates fresh ids), so id-based matching is unreliable. We compare by
+ * position using a deep structural equality that ignores `id`, which correctly
+ * reports whether the two IR trees represent the same content.
+ *
  * @returns {{ same: boolean, nodes: { added: Array, removed: Array, changed: Array } }}
  */
 export function diffIR(oldIR, newIR) {
-  const oldById = new Map();
-  const oldByIndex = new Map();
-  for (let i = 0; i < oldIR.length; i++) {
-    const n = oldIR[i];
-    if (n && n.id) oldById.set(n.id, n);
-    oldByIndex.set(i, n);
-  }
-  const newById = new Map();
-  for (let i = 0; i < newIR.length; i++) {
-    const n = newIR[i];
-    if (n && n.id) newById.set(n.id, n);
-  }
   const added = [];
   const removed = [];
   const changed = [];
-  for (let i = 0; i < newIR.length; i++) {
-    const n = newIR[i];
-    if (!n) continue;
-    const existing = n.id ? oldById.get(n.id) : oldByIndex.get(i) || null;
-    if (existing && nodesAreEqual(existing, n)) continue;
-    if (existing) changed.push({ id: n.id, old: existing, new: n });
-    else added.push(n);
+  const maxLen = Math.max(oldIR.length, newIR.length);
+
+  for (let i = 0; i < maxLen; i++) {
+    const oldNode = i < oldIR.length ? oldIR[i] : null;
+    const newNode = i < newIR.length ? newIR[i] : null;
+
+    if (oldNode && newNode) {
+      if (!nodesAreEqual(oldNode, newNode)) {
+        changed.push({ id: newNode.id ?? oldNode.id, old: oldNode, new: newNode });
+      }
+    } else if (oldNode) {
+      removed.push(oldNode);
+    } else if (newNode) {
+      added.push(newNode);
+    }
   }
-  for (let i = 0; i < oldIR.length; i++) {
-    const n = oldIR[i];
-    if (!n) continue;
-    if (n.id && newById.has(n.id)) continue;
-    removed.push(n);
-  }
+
   const same = added.length === 0 && removed.length === 0 && changed.length === 0;
   return { same, nodes: { added, removed, changed } };
 }
 
 function nodesAreEqual(a, b) {
   if (a.k !== b.k) return false;
-  if (a.id !== b.id) return false;
+  // The stored Thorm IR subtree carries no node ids, while the DOM-serialized
+  // IR does. Only compare ids when both are present.
+  if (a.id !== undefined && b.id !== undefined && a.id !== b.id) return false;
   if (a.tag && b.tag && a.tag !== b.tag) return false;
-  if (a.value !== undefined && b.value !== undefined && a.value !== b.value) return false;
+  if (a.k === 'text') {
+    if (textValue(a.value) !== textValue(b.value)) return false;
+  }
   if (a.props && b.props) {
     if (!propsEqual(a.props, b.props)) return false;
   } else if (a.props || b.props) {
@@ -203,12 +234,63 @@ function nodesAreEqual(a, b) {
 }
 
 function propsEqual(a, b) {
-  const keysA = Object.keys(a);
-  const keysB = Object.keys(b);
-  if (keysA.length !== keysB.length) return false;
-  for (const key of keysA) {
-    if (!b.hasOwnProperty(key)) return false;
-    if (a[key] !== b[key]) return false;
+  // Normalize both sides to the same canonical shape so that missing, null,
+  // and empty prop groups compare as equal. The stored Thorm IR subtree omits
+  // `cls` when null and may omit keys entirely, while the DOM-serialized IR
+  // always emits all groups. We compare only the content-relevant groups
+  // (attrs, cls, style) and ignore the `on` handler list.
+  const aAttrs = normalizeGroup(a && a.attrs);
+  const bAttrs = normalizeGroup(b && b.attrs);
+  const aCls = normalizeCls(a && a.cls);
+  const bCls = normalizeCls(b && b.cls);
+  const aStyle = normalizeGroup(a && a.style);
+  const bStyle = normalizeGroup(b && b.style);
+
+  if (!deepEqual(aAttrs, bAttrs)) return false;
+  if (aCls !== bCls) return false;
+  if (!deepEqual(aStyle, bStyle)) return false;
+  return true;
+}
+
+/**
+ * Normalize an attrs/style group to a plain object. Thorm serializes an empty
+ * attrs/style group as an empty array (`[]`) but a non-empty one as an object
+ * (`{name: ...}`). The DOM-serialized IR always uses an object. Treat empty
+ * arrays and empty objects as equivalent.
+ */
+function normalizeGroup(value) {
+  if (value == null) return {};
+  if (Array.isArray(value)) {
+    if (value.length === 0) return {};
+    // A non-empty array of [name, value] pairs — convert to an object.
+    const out = {};
+    for (const pair of value) {
+      if (Array.isArray(pair) && pair.length >= 2) out[pair[0]] = pair[1];
+    }
+    return out;
+  }
+  return value;
+}
+
+/**
+ * Normalize a class value (missing/null → '').
+ */
+function normalizeCls(value) {
+  if (value == null) return '';
+  return String(value);
+}
+
+function deepEqual(a, b) {
+  if (a === b) return true;
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) {
+    return false;
+  }
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const key of aKeys) {
+    if (!Object.prototype.hasOwnProperty.call(b, key)) return false;
+    if (!deepEqual(a[key], b[key])) return false;
   }
   return true;
 }

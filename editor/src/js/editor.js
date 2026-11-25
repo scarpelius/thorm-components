@@ -20,32 +20,15 @@ function getContentEl(blockEl) {
 }
 
 /**
- * Handle a focus-in event on a block.
+ * Deactivate a block (remove editable state, serialize DOM to IR).
  */
-function onFocusIn(blockEl) {
-  const blockId = blockEl.getAttribute('data-block-id');
-  if (activeBlock === blockEl) return;
-  activeBlock = blockEl;
-
-  // Set contenteditable and mark as active
-  blockEl.setAttribute('contenteditable', 'true');
-  blockEl.classList.add('editor-active');
-  showToolbar(blockEl);
-}
-
-/**
- * Handle a focus-out event on a block.
- */
-function onFocusOut(blockEl) {
-  const blockId = blockEl.getAttribute('data-block-id');
-  if (activeBlock !== blockEl) return;
-  activeBlock = null;
-
+function deactivateBlock(blockEl) {
   // Remove contenteditable and active class
   blockEl.removeAttribute('contenteditable');
   blockEl.classList.remove('editor-active');
 
   // Serialize DOM back to IR
+  const blockId = blockEl.getAttribute('data-block-id');
   const ir = domToIR(blockEl);
   if (window.editorState?.blocks?.[blockId]) {
     const oldIR = window.editorState.blocks[blockId];
@@ -63,6 +46,38 @@ function onFocusOut(blockEl) {
 }
 
 /**
+ * Handle a focus-in event on a block.
+ *
+ * Exported so that block commands (e.g. insertBlock) can activate a newly
+ * created block directly.
+ */
+export function onFocusIn(blockEl) {
+  const blockId = blockEl.getAttribute('data-block-id');
+  if (activeBlock === blockEl) return;
+
+  // Deactivate the previously active block (if any)
+  if (activeBlock) {
+    deactivateBlock(activeBlock);
+  }
+
+  activeBlock = blockEl;
+
+  // Set contenteditable and mark as active
+  blockEl.setAttribute('contenteditable', 'true');
+  blockEl.classList.add('editor-active');
+  showToolbar(blockEl);
+}
+
+/**
+ * Handle a focus-out event on a block.
+ */
+function onFocusOut(blockEl) {
+  if (activeBlock !== blockEl) return;
+  activeBlock = null;
+  deactivateBlock(blockEl);
+}
+
+/**
  * Mount the editor on all [data-block-id] blocks.
  */
 export function mountEditor() {
@@ -72,16 +87,13 @@ export function mountEditor() {
   // Load any persisted change queue
   loadQueue();
 
-  // Find all block elements
-  const blocks = document.querySelectorAll('[data-block-id]');
-  for (const blockEl of blocks) {
-    blockEl.addEventListener('click', () => {
+  // Delegate block clicks so blocks created later (e.g. insertBlock) work too
+  document.addEventListener('click', (e) => {
+    const blockEl = e.target.closest ? e.target.closest('[data-block-id]') : null;
+    if (blockEl) {
       onFocusIn(blockEl);
-    });
-    blockEl.addEventListener('input', () => {
-      // Mark as dirty; actual serialization happens on blur
-    });
-  }
+    }
+  });
 
   // Delegated focusout (capture phase — focusout does not bubble)
   document.addEventListener('focusout', (e) => {

@@ -11,16 +11,22 @@ use function Thorm\{
 use Thorm\IR\Node\ElNode;
 
 /**
- * Convert a block's IR tree (stored array format) to Thorm IR nodes.
+ * Convert a block's IR subtree (Thorm IR node payloads) to Thorm IR nodes.
  *
- * The stored IR format is:
- * [
- *   ['id' => 'n1', 'k' => 'el', 'tag' => 'p', 'children' => [...], 'props' => [...]],
- *   ['id' => 't1', 'k' => 'text', 'value' => 'Hello'],
- * ]
+ * The stored block content is a *subtree of the Thorm IR* — an array of
+ * Thorm IR node payloads in the same representation the page is rendered
+ * from (the output of the Thorm node's jsonSerialize()):
  *
- * This function converts that to an array of Thorm IR node objects
- * (ElNode, TextNode, etc.) that the Thorm renderer can process.
+ *   [
+ *     ['k' => 'el', 'tag' => 'p', 'props' => ['attrs' => [...], 'cls' => ..., 'style' => [...], 'on' => [...]], 'children' => [...]],
+ *     ['k' => 'text', 'value' => ['k' => 'val', 'v' => 'Hello']],
+ *   ]
+ *
+ * This function converts that back into an array of Thorm IR node objects
+ * (ElNode, TextNode, etc.) so the page can be re-rendered. Because the
+ * stored content is the exact same IR the page renders from, saving and
+ * restoring the block content round-trips the identical IR — there is no
+ * separate "editor IR" representation to keep in sync.
  */
 function irToThormNodes(array $ir): array
 {
@@ -32,14 +38,57 @@ function irToThormNodes(array $ir): array
         $k = $node['k'] ?? null;
 
         if ($k === 'text') {
-            $nodes[] = text($node['value'] ?? '');
+            $nodes[] = text(thormValueToScalar($node['value'] ?? ''));
         } elseif ($k === 'el') {
             $tag = $node['tag'] ?? 'div';
             $children = irToThormNodes($node['children'] ?? []);
-            $nodes[] = createThormTag($tag, $node['props'] ?? [], $children);
+            $nodes[] = createThormTag($tag, convertThormPropsToHelpers($node['props'] ?? []), $children);
         }
     }
     return $nodes;
+}
+
+/**
+ * Convert a Thorm IR text value (either a plain scalar or a Thorm expression
+ * such as ['k' => 'val', 'v' => '...']) to a plain scalar string.
+ */
+function thormValueToScalar(mixed $value): string
+{
+    if (is_array($value) && isset($value['k'])) {
+        // A Thorm expression; only 'val' is meaningful for literal content.
+        if ($value['k'] === 'val') {
+            return (string) ($value['v'] ?? '');
+        }
+        // Expressions are not expected in a block's stored content subtree.
+        return '';
+    }
+    return (string) $value;
+}
+
+/**
+ * Convert Thorm IR props (serialized form: {attrs, cls, style, on}) into the
+ * helper form that the Thorm tag functions expect:
+ *   [['attrs', [...]], ['cls', ...], ['style', [...]], ...]
+ */
+function convertThormPropsToHelpers(array $props): array
+{
+    $helpers = [];
+
+    $attrs = $props['attrs'] ?? [];
+    if (is_array($attrs) && $attrs !== []) {
+        $helpers[] = ['attrs', $attrs];
+    }
+
+    if (isset($props['cls']) && $props['cls'] !== null) {
+        $helpers[] = ['cls', $props['cls']];
+    }
+
+    $style = $props['style'] ?? [];
+    if (is_array($style) && $style !== []) {
+        $helpers[] = ['style', $style];
+    }
+
+    return $helpers;
 }
 
 /**
@@ -47,115 +96,63 @@ function irToThormNodes(array $ir): array
  *
  * Uses the Thorm tag functions from vendor/bitforge/thorm/src/php/tags.php.
  * Falls back to div() for unknown tags.
+ *
+ * @param array $props Thorm tag-function helper form: [['attrs', [...]], ['cls', ...], ['style', [...]], ...]
  */
 function createThormTag(string $tag, array $props, array $children): ElNode
 {
     $tag = strtolower($tag);
 
-    // Convert editor IR props to Thorm ElNode props format
-    // Editor IR: {'style' => 'color: red', 'class' => 'btn', 'attrs' => [...]}
-    // Thorm: [['attrs', [...]], ['cls', 'btn'], ['style', [...]]]
-    $thormProps = convertPropsToThorm($props);
-
     switch ($tag) {
         case 'a':
-            return a($thormProps, $children);
+            return a($props, $children);
         case 'br':
-            return br($thormProps, []);
+            return br($props, []);
         case 'blockquote':
-            return blockquote($thormProps, $children);
+            return blockquote($props, $children);
         case 'code':
-            return code($thormProps, $children);
+            return code($props, $children);
         case 'div':
-            return div($thormProps, $children);
+            return div($props, $children);
         case 'h1':
-            return h1($thormProps, $children);
+            return h1($props, $children);
         case 'h2':
-            return h2($thormProps, $children);
+            return h2($props, $children);
         case 'h3':
-            return h3($thormProps, $children);
+            return h3($props, $children);
         case 'h4':
-            return h4($thormProps, $children);
+            return h4($props, $children);
         case 'h5':
-            return h5($thormProps, $children);
+            return h5($props, $children);
         case 'h6':
-            return h6($thormProps, $children);
+            return h6($props, $children);
         case 'hr':
-            return hr($thormProps, []);
+            return hr($props, []);
         case 'img':
-            return img($thormProps, []);
+            return img($props, []);
         case 'li':
-            return li($thormProps, $children);
+            return li($props, $children);
         case 'ol':
-            return ol($thormProps, $children);
+            return ol($props, $children);
         case 'p':
-            return p($thormProps, $children);
+            return p($props, $children);
         case 'pre':
-            return pre($thormProps, $children);
+            return pre($props, $children);
         case 'span':
-            return span($thormProps, $children);
+            return span($props, $children);
         case 'strong':
-            return strong($thormProps, $children);
+            return strong($props, $children);
         case 'table':
-            return table($thormProps, $children);
+            return table($props, $children);
         case 'td':
-            return td($thormProps, $children);
+            return td($props, $children);
         case 'th':
-            return th($thormProps, $children);
+            return th($props, $children);
         case 'tr':
-            return tr($thormProps, $children);
+            return tr($props, $children);
         case 'ul':
-            return ul($thormProps, $children);
+            return ul($props, $children);
         default:
-            return div($thormProps, $children);
+            return div($props, $children);
     }
-}
-
-/**
- * Convert editor IR props to Thorm ElNode props format.
- *
- * Editor IR props: {'style' => 'color: red', 'class' => 'btn', 'attrs' => {'data-id' => '1'}}
- * Thorm props: [['style', ['color' => 'red']], ['cls', 'btn'], ['attrs', ['data-id' => '1']]]
- */
-function convertPropsToThorm(array $props): array
-{
-    $thormProps = [];
-
-    if (isset($props['style']) && is_array($props['style'])) {
-        $thormProps[] = ['style', $props['style']];
-    } elseif (isset($props['style']) && is_string($props['style'])) {
-        // Parse inline style string into key-value pairs
-        $style = [];
-        foreach (explode(';', $props['style']) as $pair) {
-            $pair = trim($pair);
-            if ($pair !== '' && str_contains($pair, ':')) {
-                [$key, $value] = explode(':', $pair, 2);
-                $style[trim($key)] = trim($value);
-            }
-        }
-        if ($style !== []) {
-            $thormProps[] = ['style', $style];
-        }
-    }
-
-    if (isset($props['class']) && $props['class'] !== '') {
-        $thormProps[] = ['cls', $props['class']];
-    }
-
-    $attrs = [];
-    if (isset($props['attrs']) && is_array($props['attrs'])) {
-        $attrs = $props['attrs'];
-    }
-    // Also pick up known attrs from the flat props
-    $knownAttrs = ['id', 'href', 'src', 'alt', 'title', 'target', 'rel', 'download'];
-    foreach ($knownAttrs as $attr) {
-        if (isset($props[$attr]) && $attr !== 'class') {
-            $attrs[$attr] = $props[$attr];
-        }
-    }
-    if ($attrs !== []) {
-        $thormProps[] = ['attrs', $attrs];
-    }
-
-    return $thormProps;
 }

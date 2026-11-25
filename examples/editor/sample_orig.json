@@ -1,0 +1,132 @@
+{
+    "blocks": [
+        {
+            "id": "block-1",
+            "type": "section",
+            "title": "Introduction",
+            "order": 0,
+            "content": [
+                {
+                    "id": "n1",
+                    "k": "el",
+                    "tag": "p",
+                    "props": {},
+                    "children": [
+                        {
+                            "id": "t1",
+                            "k": "text",
+                            "value": "This is an editable section. You can change this text directly in the browser."
+                        }
+                    ]
+                },
+                {
+                    "id": "n2",
+                    "k": "el",
+                    "tag": "h3",
+                    "props": {},
+                    "children": [
+                        {
+                            "id": "t2",
+                            "k": "text",
+                            "value": "Subsection"
+                        }
+                    ]
+                },
+                {
+                    "id": "n3",
+                    "k": "el",
+                    "tag": "p",
+                    "props": {},
+                    "children": [
+                        {
+                            "id": "t3",
+                            "k": "el",
+                            "tag": "strong",
+                            "props": {},
+                            "children": [
+                                {
+                                    "id": "t4",
+                                    "k": "text",
+                                    "value": "bold text"
+                                }
+                            ]
+                        },
+                        {
+                            "id": "t5",
+                            "k": "text",
+                            "value": " and "
+                        },
+                        {
+                            "id": "t6",
+                            "k": "el",
+                            "tag": "em",
+                            "props": {},
+                            "children": [
+                                {
+                                    "id": "t7",
+                                    "k": "text",
+                                    "value": "italic text"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "block-2",
+            "type": "section",
+            "title": "Details",
+            "order": 1,
+            "content": [
+                {
+                    "id": "n4",
+                    "k": "el",
+                    "tag": "p",
+                    "props": {},
+                    "children": [
+                        {
+                            "id": "t8",
+                            "k": "text",
+                            "value": "Another editable block with its own content."
+                        }
+                    ]
+                },
+                {
+                    "id": "n5",
+                    "k": "el",
+                    "tag": "ul",
+                    "props": {},
+                    "children": [
+                        {
+                            "id": "n6",
+                            "k": "el",
+                            "tag": "li",
+                            "props": {},
+                            "children": [
+                                {
+                                    "id": "t9",
+                                    "k": "text",
+                                    "value": "First item"
+                                }
+                            ]
+                        },
+                        {
+                            "id": "n7",
+                            "k": "el",
+                            "tag": "li",
+                            "props": {},
+                            "children": [
+                                {
+                                    "id": "t10",
+                                    "k": "text",
+                                    "value": "Second item"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

@@ -87,8 +87,8 @@ Phased roadmap for the Thorm-based browser text editor.
 1. **No server-side `EditorNode`** — The server's *stored* IR is raw arrays. Phase 1.1 adds a server-side `EditorNode` *helper* (not a stored node class) to standardize block → page IR conversion and to carry the toolbar/command registry and display widgets.
 2. **No `BlockContent` class** — Commands don't run on the server. The `Block.content` array is all that's needed.
 3. **No server-side `Command`/`CommandStack`** — Undo/redo is handled client-side in the JS editor.
-4. **`IRToThorm` conversion** — The server converts stored block IR arrays into Thorm IR nodes for initial page rendering.
-5. **Editor state embedded in IR** — Block IR trees are embedded in the page IR as a `<script>` tag for the JS editor to read.
+4. **`IRToThorm` conversion** — The server converts the block's stored Thorm IR subtree into Thorm IR nodes for initial page rendering.
+5. **Block content is a subtree of the Thorm IR** — Block content is stored as the Thorm IR subtree (the same representation the page renders from), not a separate "editor IR" representation. This lets the editor save and restore from the identical IR. The per-block editor state is written to `editor-state.json` and read by the JS editor.
 
 ## Next Steps
 

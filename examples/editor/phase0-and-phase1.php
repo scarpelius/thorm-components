@@ -8,10 +8,11 @@ use Thorm\BuildExample;
 use Thorm\Components\Editor\{Block, DocumentStructure};
 use function Thorm\Components\Editor\irToThormNodes;
 
-// Load sample document
+// Load the sample document (a Thorm IR document). Block content is stored as a
+// subtree of the Thorm IR (the same representation the page renders from).
 $samplePath = __DIR__ . '/sample.json';
 $sample = json_decode(file_get_contents($samplePath), true);
-$document = DocumentStructure::fromJson($sample);
+$document = DocumentStructure::fromThormIR($sample);
 
 // Build the page IR tree and collect block states for the JS editor
 $blocks = [];

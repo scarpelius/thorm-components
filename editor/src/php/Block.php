@@ -7,7 +7,10 @@ namespace Thorm\Components\Editor;
 /**
  * A single user-defined content unit (chapter, section, lesson, ...).
  *
- * Content is the IR tree of that block: an array of IR nodes.
+ * Content is the block's Thorm IR subtree: an array of Thorm IR node payloads
+ * (the exact same representation the page is rendered from). Storing the
+ * subtree — rather than a separate "editor IR" representation — means the
+ * editor can save and restore from the identical IR.
  */
 final class Block
 {
@@ -23,7 +26,12 @@ final class Block
     /** @var int */
     public int $order;
 
-    /** @var array<int, array> IR tree (array of IR node payloads). */
+    /**
+     * The block's content: an array of Thorm IR node payloads (the subtree
+     * of the page IR that lives inside the block's content <div>).
+     *
+     * @var array<int, array>
+     */
     public array $content = [];
 
     public function __construct(

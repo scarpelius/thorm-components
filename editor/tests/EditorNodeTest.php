@@ -26,28 +26,21 @@ final class EditorNodeTest extends TestCase
      *       div([['attrs', ['contenteditable' => 'true', 'data-block-id' => $id]]], $thormNodes),
      *   ])
      */
-    public function testRenderProducesTitleHeadingAndContenteditableWrapper(): void
+    public function testRenderProducesContenteditableWrapper(): void
     {
         $node = new EditorNode($this->makeBlock('block-1', []));
         $ir = $node->render();
 
         $this->assertInstanceOf(FragmentNode::class, $ir);
-        $this->assertCount(2, $ir->children);
+        $this->assertCount(1, $ir->children);
         $this->assertInstanceOf(ElNode::class, $ir->children[0]);
-        $this->assertInstanceOf(ElNode::class, $ir->children[1]);
 
-        // h2 with text child
-        $this->assertSame('h2', $ir->children[0]->tag);
-        $this->assertCount(1, $ir->children[0]->children);
-        $this->assertInstanceOf(TextNode::class, $ir->children[0]->children[0]);
-        $this->assertSame('My Title', (string) $ir->children[0]->children[0]->value);
-
-        // div with contenteditable + data-block-id attrs
-        $this->assertSame('div', $ir->children[1]->tag);
+        // div with data-block-id + data-title attrs
+        $this->assertSame('div', $ir->children[0]->tag);
         $this->assertSame([
-            ['attrs', ['contenteditable' => 'true', 'data-block-id' => 'block-1']],
-        ], $ir->children[1]->props);
-        $this->assertCount(0, $ir->children[1]->children);
+            ['attrs', ['data-block-id' => 'block-1', 'data-title' => 'My Title']],
+        ], $ir->children[0]->props);
+        $this->assertCount(0, $ir->children[0]->children);
     }
 
     public function testRenderWithContent(): void
@@ -57,9 +50,9 @@ final class EditorNodeTest extends TestCase
                 'id' => 'n1',
                 'k' => 'el',
                 'tag' => 'p',
-                'props' => [],
+                'props' => ['attrs' => [], 'cls' => null, 'style' => [], 'on' => []],
                 'children' => [
-                    ['id' => 't1', 'k' => 'text', 'value' => 'Hello'],
+                    ['id' => 't1', 'k' => 'text', 'value' => ['k' => 'val', 'v' => 'Hello']],
                 ],
             ],
         ];
@@ -67,24 +60,24 @@ final class EditorNodeTest extends TestCase
         $rendered = $node->render();
 
         $this->assertInstanceOf(FragmentNode::class, $rendered);
-        $this->assertCount(2, $rendered->children);
+        $this->assertCount(1, $rendered->children);
         // The wrapper div should contain the converted p element
-        $this->assertInstanceOf(ElNode::class, $rendered->children[1]);
-        $this->assertSame('div', $rendered->children[1]->tag);
-        $this->assertCount(1, $rendered->children[1]->children);
-        $this->assertInstanceOf(ElNode::class, $rendered->children[1]->children[0]);
-        $this->assertSame('p', $rendered->children[1]->children[0]->tag);
+        $this->assertInstanceOf(ElNode::class, $rendered->children[0]);
+        $this->assertSame('div', $rendered->children[0]->tag);
+        $this->assertCount(1, $rendered->children[0]->children);
+        $this->assertInstanceOf(ElNode::class, $rendered->children[0]->children[0]);
+        $this->assertSame('p', $rendered->children[0]->children[0]->tag);
     }
 
     public function testGetStateReturnsIdMappedToContent(): void
     {
         $node = new EditorNode($this->makeBlock('block-3', [
-            ['id' => 'n1', 'k' => 'el', 'tag' => 'p', 'props' => [], 'children' => []],
+            ['id' => 'n1', 'k' => 'el', 'tag' => 'p', 'props' => ['attrs' => [], 'cls' => null, 'style' => [], 'on' => []], 'children' => []],
         ]));
         $state = $node->getState();
 
         $this->assertSame(['block-3' => [
-            ['id' => 'n1', 'k' => 'el', 'tag' => 'p', 'props' => [], 'children' => []],
+            ['id' => 'n1', 'k' => 'el', 'tag' => 'p', 'props' => ['attrs' => [], 'cls' => null, 'style' => [], 'on' => []], 'children' => []],
         ]], $state);
     }
 

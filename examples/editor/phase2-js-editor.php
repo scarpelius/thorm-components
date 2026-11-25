@@ -8,12 +8,14 @@ use Thorm\BuildExample;
 use Thorm\Components\Editor\{Block, DocumentStructure, EditorNode, EditorToolbar, EditorWidget};
 use Thorm\Components\Editor\Widgets\{BlockHeaderWidget, DragHandleWidget};
 
-// Load sample document
+// Load the sample document (a Thorm IR document). The block content is stored
+// as a subtree of the Thorm IR — the same representation the page renders from.
 $samplePath = __DIR__ . '/sample.json';
 $sample = json_decode(file_get_contents($samplePath), true);
-$document = DocumentStructure::fromJson($sample);
+$document = DocumentStructure::fromThormIR($sample);
 
-// Build the page IR tree and collect block states for the JS editor
+// Build the page IR tree and collect the editor state (per-block Thorm IR
+// subtrees) for the JS editor.
 $blocks = [];
 $blockStates = [];
 
@@ -31,27 +33,32 @@ foreach ($document->blocks as $block) {
     $node->addWidget(new DragHandleWidget());
 
     $blocks[] = $node->render();
-    $blockStates = array_merge($blockStates, $node->getState());
+    // The editor state holds each block's content as its Thorm IR subtree, so
+    // the editor saves and restores from the identical IR.
+    $blockStates[$block->id] = $block->content;
 }
 
-// Write editor state to a JSON file for the client to fetch.
-// The ThormJS runtime does not have a "script" primitive, so embedding
-// a <script> tag in the IR via html() does not execute it. Instead we
-// write a static JSON file that the template's module script fetches
-// and assigns to window.editorState before mounting the editor.
 $publicDir = realpath(__DIR__ . '/../../public/') . '/';
-$statePath = $publicDir . 'phase2-js-editor/editor-state.json';
-file_put_contents($statePath, json_encode(['blocks' => $blockStates], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
-// Build the page IR tree (no embedded script needed)
+$renderer = new Render();
+
+// Build the page IR tree (no embedded script needed; the editor state is
+// written to a separate JSON file that the JS editor fetches).
 $app = fragment([
     h1([], [text('Editable Document (Phase 2 JS Editor)')]),
     p([], [text('Click on a block to edit it. Changes are saved every 60 seconds.')]),
     ...$blocks,
 ]);
 
-$renderer = new Render();
 $res = $renderer->render($app);
+
+// Write the editor state (per-block Thorm IR subtrees) to disk. The JS editor
+// fetches this file and uses it as the in-memory IR for each block.
+$statePath = $publicDir . 'phase2-js-editor/editor-state.json';
+file_put_contents(
+    $statePath,
+    json_encode(['blocks' => $blockStates], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)
+);
 
 $build = BuildExample::build([
     'name'       => 'phase2-js-editor',
@@ -61,7 +68,6 @@ $build = BuildExample::build([
     'opts'       => [
         'title'       => 'Phase 2 JS Editor',
         'containerId' => 'app',
-        'statePath'   => 'editor-state.json',
     ],
 ]);
 

@@ -28,7 +28,8 @@ describe('domToIR', () => {
     assert.strictEqual(ir[0].tag, 'p');
     assert.strictEqual(ir[0].children.length, 1);
     assert.strictEqual(ir[0].children[0].k, 'text');
-    assert.strictEqual(ir[0].children[0].value, 'Hello');
+    // Thorm IR text value is { k: 'val', v: '...' }
+    assert.deepStrictEqual(ir[0].children[0].value, { k: 'val', v: 'Hello' });
   });
 
   test('converts nested elements', () => {
@@ -38,8 +39,8 @@ describe('domToIR', () => {
     assert.strictEqual(ir[0].tag, 'p');
     assert.strictEqual(ir[0].children.length, 2);
     assert.strictEqual(ir[0].children[0].tag, 'strong');
-    assert.strictEqual(ir[0].children[0].children[0].value, 'Bold');
-    assert.strictEqual(ir[0].children[1].value, ' text');
+    assert.deepStrictEqual(ir[0].children[0].children[0].value, { k: 'val', v: 'Bold' });
+    assert.deepStrictEqual(ir[0].children[1].value, { k: 'val', v: ' text' });
   });
 
   test('converts lists', () => {
@@ -49,7 +50,17 @@ describe('domToIR', () => {
     assert.strictEqual(ir[0].tag, 'ul');
     assert.strictEqual(ir[0].children.length, 2);
     assert.strictEqual(ir[0].children[0].tag, 'li');
-    assert.strictEqual(ir[0].children[0].children[0].value, 'One');
+    assert.deepStrictEqual(ir[0].children[0].children[0].value, { k: 'val', v: 'One' });
+  });
+
+  test('produces Thorm IR props shape', () => {
+    const el = document.createElement('div');
+    el.innerHTML = '<p class="lead" data-x="1">Hello</p>';
+    const ir = domToIR(el);
+    assert.strictEqual(ir[0].props.cls, 'lead');
+    assert.deepStrictEqual(ir[0].props.attrs, { 'data-x': '1' });
+    assert.deepStrictEqual(ir[0].props.style, {});
+    assert.deepStrictEqual(ir[0].props.on, []);
   });
 });
 
@@ -60,9 +71,9 @@ describe('irToDom', () => {
         id: 'n1',
         k: 'el',
         tag: 'p',
-        props: {},
+        props: { attrs: {}, cls: null, style: {}, on: [] },
         children: [
-          { id: 't1', k: 'text', value: 'Hello' },
+          { id: 't1', k: 'text', value: { k: 'val', v: 'Hello' } },
         ],
       },
     ];
@@ -90,7 +101,7 @@ describe('irToDom', () => {
 describe('diffIR', () => {
   test('detects same IR', () => {
     const ir = [
-      { id: 'n1', k: 'el', tag: 'p', props: {}, children: [] },
+      { id: 'n1', k: 'el', tag: 'p', props: { attrs: {}, cls: null, style: {}, on: [] }, children: [] },
     ];
     const diff = diffIR(ir, ir);
     assert.strictEqual(diff.same, true);
@@ -98,13 +109,13 @@ describe('diffIR', () => {
 
   test('detects text change', () => {
     const ir1 = [
-      { id: 'n1', k: 'el', tag: 'p', props: {}, children: [
-        { id: 't1', k: 'text', value: 'Hello' },
+      { id: 'n1', k: 'el', tag: 'p', props: { attrs: {}, cls: null, style: {}, on: [] }, children: [
+        { id: 't1', k: 'text', value: { k: 'val', v: 'Hello' } },
       ]},
     ];
     const ir2 = [
-      { id: 'n1', k: 'el', tag: 'p', props: {}, children: [
-        { id: 't1', k: 'text', value: 'World' },
+      { id: 'n1', k: 'el', tag: 'p', props: { attrs: {}, cls: null, style: {}, on: [] }, children: [
+        { id: 't1', k: 'text', value: { k: 'val', v: 'World' } },
       ]},
     ];
     const diff = diffIR(ir1, ir2);
@@ -114,11 +125,11 @@ describe('diffIR', () => {
 
   test('detects structural change (added node)', () => {
     const ir1 = [
-      { id: 'n1', k: 'el', tag: 'p', props: {}, children: [] },
+      { id: 'n1', k: 'el', tag: 'p', props: { attrs: {}, cls: null, style: {}, on: [] }, children: [] },
     ];
     const ir2 = [
-      { id: 'n1', k: 'el', tag: 'p', props: {}, children: [] },
-      { id: 'n2', k: 'el', tag: 'p', props: {}, children: [] },
+      { id: 'n1', k: 'el', tag: 'p', props: { attrs: {}, cls: null, style: {}, on: [] }, children: [] },
+      { id: 'n2', k: 'el', tag: 'p', props: { attrs: {}, cls: null, style: {}, on: [] }, children: [] },
     ];
     const diff = diffIR(ir1, ir2);
     assert.strictEqual(diff.same, false);
@@ -127,15 +138,32 @@ describe('diffIR', () => {
 
   test('detects structural change (removed node)', () => {
     const ir1 = [
-      { id: 'n1', k: 'el', tag: 'p', props: {}, children: [] },
-      { id: 'n2', k: 'el', tag: 'p', props: {}, children: [] },
+      { id: 'n1', k: 'el', tag: 'p', props: { attrs: {}, cls: null, style: {}, on: [] }, children: [] },
+      { id: 'n2', k: 'el', tag: 'p', props: { attrs: {}, cls: null, style: {}, on: [] }, children: [] },
     ];
     const ir2 = [
-      { id: 'n1', k: 'el', tag: 'p', props: {}, children: [] },
+      { id: 'n1', k: 'el', tag: 'p', props: { attrs: {}, cls: null, style: {}, on: [] }, children: [] },
     ];
     const diff = diffIR(ir1, ir2);
     assert.strictEqual(diff.same, false);
     assert.strictEqual(diff.nodes.removed.length, 1);
+  });
+
+  test('stored Thorm IR subtree (no ids, no cls) equals DOM-serialized IR (with ids)', () => {
+    // The stored content is the Thorm IR subtree: no `id`, `cls` omitted when null.
+    const stored = [
+      { k: 'el', tag: 'p', props: { attrs: [], style: [], on: [] }, children: [
+        { k: 'text', value: { k: 'val', v: 'Hello' } },
+      ]},
+    ];
+    // The DOM-serialized IR (from domToIR): has ids, always emits all prop groups.
+    const serialized = [
+      { id: 'n1', k: 'el', tag: 'p', props: { attrs: {}, cls: null, style: {}, on: [] }, children: [
+        { id: 't1', k: 'text', value: { k: 'val', v: 'Hello' } },
+      ]},
+    ];
+    const diff = diffIR(stored, serialized);
+    assert.strictEqual(diff.same, true);
   });
 });
 
@@ -166,7 +194,7 @@ describe('convertPropsToIR', () => {
     el.setAttribute('data-id', '42');
     el.setAttribute('href', '#link');
     const props = convertPropsToIR(el);
-    assert.strictEqual(props.class, 'btn primary');
+    assert.strictEqual(props.cls, 'btn primary');
     assert.strictEqual(props.attrs['data-id'], '42');
     assert.strictEqual(props.attrs.href, '#link');
   });

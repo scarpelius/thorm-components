@@ -9,6 +9,26 @@ The document is a collection of **blocks**. Each block is a user-defined, meanin
 - Block content is **immutable per edit** (copy-on-write): each structural operation returns a new `DocumentStructure`.
 - Block boundaries are user-defined: a block is a top-level content unit. Splitting or merging blocks is a deliberate user action.
 
+## 1.1. Block content is a subtree of the Thorm IR
+
+The block's content is stored as a **subtree of the Thorm IR** — the exact same
+representation the page is rendered from (the output of a Thorm node's
+`jsonSerialize()`). It is **not** a separate "editor IR" representation.
+
+- A block's content is the array of Thorm IR node payloads that live inside the
+  block's content `<div>` in the page IR.
+- Storing the subtree (rather than inventing a parallel representation) means
+  the editor can **save and restore from the identical IR** — there is no
+  second representation to keep in sync, and no conversion drift between the
+  stored content and what the page renders.
+- Thorm IR node payload shapes:
+  - element: `{ k: 'el', tag: 'p', props: { attrs: {...}, cls: ..., style: {...}, on: [] }, children: [...] }`
+  - text:    `{ k: 'text', value: { k: 'val', v: '...' } }`
+- The sample document (`examples/editor/sample.json`) is a full Thorm IR
+  document (`{ atoms, root }`) whose blocks' content is the Thorm IR subtree.
+  `DocumentStructure::fromThormIR()` loads it, extracting per-block metadata
+  (`data-block-id`, `data-title`) and the content subtree.
+
 ## 2. Document Identification
 
 Documents are identified by an **integer ID**.

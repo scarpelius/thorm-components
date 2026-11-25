@@ -14,10 +14,11 @@ DOM back to IR on blur.
 | Decision | Choice |
 |---|---|
 | DOM ↔ IR sync | **Hybrid** — Thorm renders initial content; JS takes over on focus; DOM→IR serialization on **blur** |
+| IR representation | Block content is a **subtree of the Thorm IR** (the same representation the page renders from), not a separate "editor IR". Save/restore round-trip the identical IR. See decisions §1.1 |
 | Save endpoint | **Minimal** in Phase 2: `POST /api/editor/{docId}` with body `{ changes: [{ blockId, ir, type }, ...] }`; writes per-block IR to `editor/storage/documents/{id}/blocks/{blockId}.json`. Validation + rate limiting deferred to Phase 3 |
 | Delivery | **Plain ES modules** under `editor/src/js/`, no build step, loaded via `<script type="module">` |
 | Testing | **Playwright** (npm) for E2E; **jsdom** for IR/commands unit tests |
-| Initialization | Keep `window.editorState` as-is; toolbar derived from **hardcoded default** in JS; document structure derived from **DOM** (`data-block-id` attributes) |
+| Initialization | `window.editorState` loaded from `editor-state.json` (written by the PHP example); the per-block value is the block's Thorm IR subtree. Toolbar derived from **hardcoded default** in JS; document structure derived from **DOM** (`data-block-id` attributes) |
 | New example | `examples/editor/phase2-js-editor.php` (Phase 1.1 unchanged) |
 | Change queue payload | **Batch** of per-block IR replacements, sent every 60 s |
 | Undo/redo | **Simplified** — store only the changed node's before/after state (not full block IR) |

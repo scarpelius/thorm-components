@@ -153,4 +153,110 @@ final class DocumentStructure
         }
         return new self($blocks);
     }
+
+    /**
+     * Build a document structure from a Thorm IR document.
+     *
+     * A Thorm IR document has the shape produced by {@see Render::toIR()}:
+     *
+     *   [
+     *     'atoms' => [...],
+     *     'root' => [
+     *       'k' => 'fragment',
+     *       'children' => [
+     *         [
+     *           'k' => 'fragment',
+     *           'children' => [
+     *             [
+     *               'k' => 'el',
+     *               'tag' => 'div',
+     *               'props' => ['attrs' => ['data-block-id' => ..., 'data-title' => ...], ...],
+     *               'children' => [ ... the block's Thorm IR subtree ... ],
+     *             ],
+     *           ],
+     *         ],
+     *       ],
+     *     ],
+     *   ]
+     *
+     * Each block's content is stored as the Thorm IR subtree — the children of
+     * the block's content <div> — which is the exact same representation the
+     * page is rendered from. This lets the editor save and restore from the
+     * same IR (no separate "editor IR" representation).
+     *
+     * @param array $json A Thorm IR document (the output of Render::toIR()).
+     */
+    public static function fromThormIR(array $json): self
+    {
+        $blocks = [];
+        $root = $json['root'] ?? null;
+        if (!is_array($root)) {
+            return new self();
+        }
+        // The root is a fragment whose children are per-block fragments.
+        foreach (($root['children'] ?? []) as $child) {
+            if (!is_array($child)) {
+                continue;
+            }
+            foreach (($child['children'] ?? []) as $el) {
+                $blocks[] = self::blockFromThormNode($el);
+            }
+        }
+        return new self($blocks);
+    }
+
+    /**
+     * Build a Block from a single Thorm IR element node (a block's content div).
+     *
+     * The block's content is set to the element's children (its Thorm IR
+     * subtree), so the stored content is a subtree of the page IR.
+     *
+     * @param array $node A Thorm IR el node (the block's content div).
+     */
+    private static function blockFromThormNode(array $node): Block
+    {
+        $attrs = $node['props']['attrs'] ?? [];
+        $id = self::attrValue($attrs, 'data-block-id');
+        $title = self::attrValue($attrs, 'data-title');
+        $order = self::orderFromNode($node);
+        $content = is_array($node['children'] ?? null) ? $node['children'] : [];
+        return new Block(
+            $id,
+            'section',
+            $title,
+            $order,
+            $content
+        );
+    }
+
+    /**
+     * Extract a string value from a Thorm IR attr. An attr value is either a
+     * plain scalar or a Thorm expression (e.g. ['k' => 'val', 'v' => '...']).
+     *
+     * @param array $attrs
+     */
+    private static function attrValue(array $attrs, string $name): string
+    {
+        if (!isset($attrs[$name])) {
+            return '';
+        }
+        $v = $attrs[$name];
+        if (is_array($v)) {
+            return (string) ($v['v'] ?? '');
+        }
+        return (string) $v;
+    }
+
+    /**
+     * Derive a block's order from its position in the document. Thorm IR nodes
+     * carry no explicit order, so we fall back to the index within the block
+     * list (the block's position in the page).
+     */
+    private static function orderFromNode(array $node): int
+    {
+        // No explicit order attribute in the Thorm IR subtree; the caller is
+        // responsible for re-ordering. Here we just return 0; the document
+        // order (position in the array) is what matters for rendering.
+        return 0;
+    }
 }

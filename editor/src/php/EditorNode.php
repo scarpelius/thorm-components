@@ -66,9 +66,13 @@ final class EditorNode
     public function render(): FragmentNode
     {
         return fragment([
-            h2([], [text($this->block->title)]),
             div(
-                [['attrs', ['contenteditable' => 'true', 'data-block-id' => $this->block->id]]],
+                [['attrs', 
+                    [
+                        'data-block-id' => $this->block->id,
+                        'data-title'    => $this->block->title,
+                    ]
+                ]],
                 $this->getThormNodes()
             ),
         ]);

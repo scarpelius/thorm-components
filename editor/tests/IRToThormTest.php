@@ -20,9 +20,9 @@ final class IRToThormTest extends TestCase
         return \Thorm\Components\Editor\createThormTag($tag, $props, $children);
     }
 
-    private function convertPropsToThorm(array $props): array
+    private function convertThormPropsToHelpers(array $props): array
     {
-        return \Thorm\Components\Editor\convertPropsToThorm($props);
+        return \Thorm\Components\Editor\convertThormPropsToHelpers($props);
     }
 
     public function testEmptyIRReturnsEmptyArray(): void
@@ -33,7 +33,7 @@ final class IRToThormTest extends TestCase
     public function testTextIR(): void
     {
         $ir = [
-            ['id' => 't1', 'k' => 'text', 'value' => 'Hello'],
+            ['id' => 't1', 'k' => 'text', 'value' => ['k' => 'val', 'v' => 'Hello']],
         ];
         $nodes = $this->irToThormNodes($ir);
         $this->assertCount(1, $nodes);
@@ -47,9 +47,9 @@ final class IRToThormTest extends TestCase
                 'id' => 'n1',
                 'k' => 'el',
                 'tag' => 'p',
-                'props' => [],
+                'props' => ['attrs' => [], 'cls' => null, 'style' => [], 'on' => []],
                 'children' => [
-                    ['id' => 't1', 'k' => 'text', 'value' => 'Hello'],
+                    ['id' => 't1', 'k' => 'text', 'value' => ['k' => 'val', 'v' => 'Hello']],
                 ],
             ],
         ];
@@ -65,9 +65,9 @@ final class IRToThormTest extends TestCase
                 'id' => 'n1',
                 'k' => 'el',
                 'tag' => 'h2',
-                'props' => [],
+                'props' => ['attrs' => [], 'cls' => null, 'style' => [], 'on' => []],
                 'children' => [
-                    ['id' => 't1', 'k' => 'text', 'value' => 'Title'],
+                    ['id' => 't1', 'k' => 'text', 'value' => ['k' => 'val', 'v' => 'Title']],
                 ],
             ],
         ];
@@ -83,15 +83,15 @@ final class IRToThormTest extends TestCase
                 'id' => 'n1',
                 'k' => 'el',
                 'tag' => 'div',
-                'props' => [],
+                'props' => ['attrs' => [], 'cls' => null, 'style' => [], 'on' => []],
                 'children' => [
                     [
                         'id' => 'n2',
                         'k' => 'el',
                         'tag' => 'p',
-                        'props' => [],
+                        'props' => ['attrs' => [], 'cls' => null, 'style' => [], 'on' => []],
                         'children' => [
-                            ['id' => 't1', 'k' => 'text', 'value' => 'Inner'],
+                            ['id' => 't1', 'k' => 'text', 'value' => ['k' => 'val', 'v' => 'Inner']],
                         ],
                     ],
                 ],
@@ -105,9 +105,9 @@ final class IRToThormTest extends TestCase
     public function testMultipleNodes(): void
     {
         $ir = [
-            ['id' => 'n1', 'k' => 'el', 'tag' => 'p', 'props' => [], 'children' => []],
-            ['id' => 'n2', 'k' => 'el', 'tag' => 'p', 'props' => [], 'children' => []],
-            ['id' => 't1', 'k' => 'text', 'value' => 'Text'],
+            ['id' => 'n1', 'k' => 'el', 'tag' => 'p', 'props' => ['attrs' => [], 'cls' => null, 'style' => [], 'on' => []], 'children' => []],
+            ['id' => 'n2', 'k' => 'el', 'tag' => 'p', 'props' => ['attrs' => [], 'cls' => null, 'style' => [], 'on' => []], 'children' => []],
+            ['id' => 't1', 'k' => 'text', 'value' => ['k' => 'val', 'v' => 'Text']],
         ];
         $nodes = $this->irToThormNodes($ir);
         $this->assertCount(3, $nodes);
@@ -120,7 +120,7 @@ final class IRToThormTest extends TestCase
                 'id' => 'n1',
                 'k' => 'el',
                 'tag' => 'unknown',
-                'props' => [],
+                'props' => ['attrs' => [], 'cls' => null, 'style' => [], 'on' => []],
                 'children' => [],
             ],
         ];
@@ -131,34 +131,25 @@ final class IRToThormTest extends TestCase
 
     public function testPropsConversion(): void
     {
-        $props = $this->convertPropsToThorm([
-            'class' => 'btn',
-            'id' => 'my-id',
+        $props = $this->convertThormPropsToHelpers([
+            'attrs' => ['id' => ['k' => 'val', 'v' => 'my-id']],
+            'cls' => 'btn',
             'style' => ['color' => 'red'],
         ]);
         $this->assertContains(['cls', 'btn'], $props);
-        $this->assertContains(['attrs', ['id' => 'my-id']], $props);
         $this->assertContains(['style', ['color' => 'red']], $props);
-    }
-
-    public function testPropsConversionWithStyleString(): void
-    {
-        $props = $this->convertPropsToThorm([
-            'style' => 'color: red; font-size: 16px;',
-        ]);
-        $this->assertCount(1, $props);
-        $this->assertSame(['style', ['color' => 'red', 'font-size' => '16px']], $props[0]);
+        $this->assertContains(['attrs', ['id' => ['k' => 'val', 'v' => 'my-id']]], $props);
     }
 
     public function testPropsConversionEmpty(): void
     {
-        $props = $this->convertPropsToThorm([]);
+        $props = $this->convertThormPropsToHelpers(['attrs' => [], 'cls' => null, 'style' => [], 'on' => []]);
         $this->assertSame([], $props);
     }
 
     public function testCreateThormTagWithProps(): void
     {
-        $node = $this->createThormTag('p', ['class' => 'highlight'], []);
+        $node = $this->createThormTag('p', [['cls', 'highlight']], []);
         $this->assertInstanceOf(ElNode::class, $node);
     }
 
@@ -169,9 +160,9 @@ final class IRToThormTest extends TestCase
                 'id' => 'n1',
                 'k' => 'el',
                 'tag' => 'a',
-                'props' => ['href' => 'https://example.com'],
+                'props' => ['attrs' => ['href' => ['k' => 'val', 'v' => 'https://example.com']], 'cls' => null, 'style' => [], 'on' => []],
                 'children' => [
-                    ['id' => 't1', 'k' => 'text', 'value' => 'Link'],
+                    ['id' => 't1', 'k' => 'text', 'value' => ['k' => 'val', 'v' => 'Link']],
                 ],
             ],
         ];

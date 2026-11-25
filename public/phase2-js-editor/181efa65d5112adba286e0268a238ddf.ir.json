@@ -44,34 +44,16 @@
                 "children": [
                     {
                         "k": "el",
-                        "tag": "h2",
-                        "props": {
-                            "attrs": [],
-                            "style": [],
-                            "on": []
-                        },
-                        "children": [
-                            {
-                                "k": "text",
-                                "value": {
-                                    "k": "val",
-                                    "v": "Introduction"
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        "k": "el",
                         "tag": "div",
                         "props": {
                             "attrs": {
-                                "contenteditable": {
-                                    "k": "val",
-                                    "v": "true"
-                                },
                                 "data-block-id": {
                                     "k": "val",
                                     "v": "block-1"
+                                },
+                                "data-title": {
+                                    "k": "val",
+                                    "v": "Introduction"
                                 }
                             },
                             "style": [],
@@ -177,34 +159,16 @@
                 "children": [
                     {
                         "k": "el",
-                        "tag": "h2",
-                        "props": {
-                            "attrs": [],
-                            "style": [],
-                            "on": []
-                        },
-                        "children": [
-                            {
-                                "k": "text",
-                                "value": {
-                                    "k": "val",
-                                    "v": "Details"
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        "k": "el",
                         "tag": "div",
                         "props": {
                             "attrs": {
-                                "contenteditable": {
-                                    "k": "val",
-                                    "v": "true"
-                                },
                                 "data-block-id": {
                                     "k": "val",
                                     "v": "block-2"
+                                },
+                                "data-title": {
+                                    "k": "val",
+                                    "v": "Details"
                                 }
                             },
                             "style": [],
