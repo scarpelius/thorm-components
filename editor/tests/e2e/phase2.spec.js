@@ -166,8 +166,12 @@ test('a newly inserted block is selectable and shows the toolbar', async ({ page
   await page.waitForTimeout(500);
   expect(await page.evaluate(() => document.querySelector('.editor-toolbar') !== null)).toBe(true);
 
-  // Click the "Insert Block" toolbar button (find it by its label)
+  // Click the "Insert Block" toolbar dropdown (find it by its label)
   await page.click('.editor-toolbar button:has-text("Insert Block")', { timeout: 5000 });
+  await page.waitForTimeout(200);
+
+  // Click the "Insert below" item in the dropdown
+  await page.click('.editor-toolbar-dropdown-menu button:has-text("Insert below")', { timeout: 5000 });
   await page.waitForTimeout(500);
 
   // A new block should exist in the DOM with a data-block-id
@@ -202,6 +206,163 @@ test('a newly inserted block is selectable and shows the toolbar', async ({ page
   // Verify the toolbar is shown
   const toolbarVisible = await page.evaluate(() => document.querySelector('.editor-toolbar') !== null);
   expect(toolbarVisible).toBe(true);
+});
+
+test('insert block above via dropdown', async ({ page }) => {
+  const baseUrl = 'http://localhost:47319';
+
+  await page.goto(baseUrl + '/phase2-js-editor/', { waitUntil: 'load' });
+  await page.waitForSelector('[data-block-id]', { timeout: 15000 });
+  await page.waitForTimeout(2000);
+
+  // Make block-1 active so the toolbar is available
+  await page.click('[data-block-id="block-1"]', { timeout: 5000 });
+  await page.waitForTimeout(500);
+
+  // Open the "Insert Block" dropdown and pick "Insert above"
+  await page.click('.editor-toolbar button:has-text("Insert Block")', { timeout: 5000 });
+  await page.waitForTimeout(200);
+  await page.click('.editor-toolbar-dropdown-menu button:has-text("Insert above")', { timeout: 5000 });
+  await page.waitForTimeout(500);
+
+  // A new block should exist in the DOM with a data-block-id
+  const newBlockId = await page.evaluate(() => {
+    const blocks = [...document.querySelectorAll('[data-block-id]')];
+    const newOne = blocks.find((el) => el.getAttribute('data-block-id') !== 'block-1' && el.getAttribute('data-block-id') !== 'block-2');
+    return newOne ? newOne.getAttribute('data-block-id') : null;
+  });
+  expect(newBlockId).not.toBeNull();
+
+  // The new block should be positioned BEFORE block-1 (insert above)
+  const beforeOrder = await page.evaluate((id) => {
+    const blocks = [...document.querySelectorAll('[data-block-id]')];
+    const newIdx = blocks.findIndex((el) => el.getAttribute('data-block-id') === id);
+    const block1Idx = blocks.findIndex((el) => el.getAttribute('data-block-id') === 'block-1');
+    return newIdx < block1Idx;
+  }, newBlockId);
+  expect(beforeOrder).toBe(true);
+
+  // The new block should be activated automatically
+  const newBlockActive = await page.evaluate((id) => {
+    const el = document.querySelector(`[data-block-id="${id}"]`);
+    return el && el.classList.contains('editor-active');
+  }, newBlockId);
+  expect(newBlockActive).toBe(true);
+});
+
+test('insert block at cursor works when caret is in block div', async ({ page }) => {
+  const baseUrl = 'http://localhost:47319';
+
+  await page.goto(baseUrl + '/phase2-js-editor/', { waitUntil: 'load' });
+  await page.waitForSelector('[data-block-id]', { timeout: 15000 });
+  await page.waitForTimeout(2000);
+
+  // Make block-2 active so the toolbar is available
+  await page.click('[data-block-id="block-2"]', { timeout: 5000 });
+  await page.waitForTimeout(500);
+
+  // Move the caret to the very start of block-2 so that the caret's parent
+  // element is the block's own <div> (not a nested <p>).
+  await page.evaluate(() => {
+    const block = document.querySelector('[data-block-id="block-2"]');
+    const range = document.createRange();
+    range.setStart(block, 0);
+    range.collapse(true);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  });
+
+  // Open the "Insert Block" dropdown and pick "Insert at cursor"
+  await page.click('.editor-toolbar button:has-text("Insert Block")', { timeout: 5000 });
+  await page.waitForTimeout(200);
+  await page.click('.editor-toolbar-dropdown-menu button:has-text("Insert at cursor")', { timeout: 5000 });
+  await page.waitForTimeout(500);
+
+  // A new block should exist in the DOM with a data-block-id
+  const newBlockId = await page.evaluate(() => {
+    const blocks = [...document.querySelectorAll('[data-block-id]')];
+    const newOne = blocks.find((el) => el.getAttribute('data-block-id') !== 'block-1' && el.getAttribute('data-block-id') !== 'block-2');
+    return newOne ? newOne.getAttribute('data-block-id') : null;
+  });
+  expect(newBlockId).not.toBeNull();
+
+  // The new block should be inside block-2 (not a sibling of block-2)
+  const isInsideBlock2 = await page.evaluate((id) => {
+    const block2 = document.querySelector('[data-block-id="block-2"]');
+    const newBlock = document.querySelector(`[data-block-id="${id}"]`);
+    return block2 && newBlock && block2.contains(newBlock);
+  }, newBlockId);
+  expect(isInsideBlock2).toBe(true);
+
+  // The new block should be activated automatically
+  const newBlockActive = await page.evaluate((id) => {
+    const el = document.querySelector(`[data-block-id="${id}"]`);
+    return el && el.classList.contains('editor-active');
+  }, newBlockId);
+  expect(newBlockActive).toBe(true);
+});
+
+test('insert block at cursor works when caret is inside a nested element', async ({ page }) => {
+  const baseUrl = 'http://localhost:47319';
+
+  await page.goto(baseUrl + '/phase2-js-editor/', { waitUntil: 'load' });
+  await page.waitForSelector('[data-block-id]', { timeout: 15000 });
+  await page.waitForTimeout(2000);
+
+  // Make block-1 active so the toolbar is available
+  await page.click('[data-block-id="block-1"]', { timeout: 5000 });
+  await page.waitForTimeout(500);
+
+  // Place the caret inside the first <p> of block-1 (a nested element).
+  await page.evaluate(() => {
+    const p = document.querySelector('[data-block-id="block-1"] p');
+    const range = document.createRange();
+    range.setStart(p, 0);
+    range.collapse(true);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  });
+
+  // Open the "Insert Block" dropdown and pick "Insert at cursor"
+  await page.click('.editor-toolbar button:has-text("Insert Block")', { timeout: 5000 });
+  await page.waitForTimeout(200);
+  await page.click('.editor-toolbar-dropdown-menu button:has-text("Insert at cursor")', { timeout: 5000 });
+  await page.waitForTimeout(500);
+
+  // A new block should have been created inside block-1, after the <p>
+  const newBlockId = await page.evaluate(() => {
+    const blocks = [...document.querySelectorAll('[data-block-id]')];
+    const newOne = blocks.find((el) => el.getAttribute('data-block-id') !== 'block-1' && el.getAttribute('data-block-id') !== 'block-2');
+    return newOne ? newOne.getAttribute('data-block-id') : null;
+  });
+  expect(newBlockId).not.toBeNull();
+
+  // The new block should be inside block-1
+  const isInsideBlock1 = await page.evaluate((id) => {
+    const block1 = document.querySelector('[data-block-id="block-1"]');
+    const newBlock = document.querySelector(`[data-block-id="${id}"]`);
+    return block1 && newBlock && block1.contains(newBlock);
+  }, newBlockId);
+  expect(isInsideBlock1).toBe(true);
+
+  // The new block should come after the first <p> in block-1
+  const afterFirstP = await page.evaluate((id) => {
+    const block1 = document.querySelector('[data-block-id="block-1"]');
+    const newBlock = document.querySelector(`[data-block-id="${id}"]`);
+    const firstP = block1.querySelector('p');
+    // The new block should be a sibling of the <p>, placed after it
+    return newBlock && firstP && newBlock === firstP.nextSibling;
+  }, newBlockId);
+  expect(afterFirstP).toBe(true);
+
+  // The new block should be activated automatically
+  const newBlockActive = await page.evaluate((id) => {
+    const el = document.querySelector(`[data-block-id="${id}"]`);
+    return el && el.classList.contains('editor-active');
+  }, newBlockId);
+  expect(newBlockActive).toBe(true);
 });
 
 test('clicking a toolbar command keeps contenteditable active', async ({ page }) => {
@@ -285,6 +446,131 @@ test('bold command wraps selected text in <strong>', async ({ page }) => {
   });
   console.log('Has strong:', hasStrong);
   expect(hasStrong).toBe(true);
+});
+
+test('OL command wraps selected text in ordered list', async ({ page }) => {
+  const baseUrl = 'http://localhost:47319';
+  await page.goto(baseUrl + '/phase2-js-editor/', { waitUntil: 'load' });
+  await page.waitForSelector('[data-block-id]', { timeout: 15000 });
+  await page.waitForTimeout(2000);
+  await page.click('[data-block-id="block-1"]', { timeout: 5000 });
+  await page.waitForTimeout(500);
+  await page.evaluate(() => {
+    const p = document.querySelector('[data-block-id="block-1"] p');
+    const range = document.createRange();
+    range.selectNodeContents(p);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+  });
+  const olButton = await page.$('.editor-toolbar button:nth-child(6)');
+  await olButton.click();
+  await page.waitForTimeout(500);
+  const olInfo = await page.evaluate(() => {
+    const block = document.querySelector('[data-block-id="block-1"]');
+    const ol = block.querySelector('ol');
+    const li = ol && ol.querySelector('li');
+    return { hasOl: ol !== null, hasLi: li !== null, liText: li ? li.textContent : null };
+  });
+  expect(olInfo.hasOl).toBe(true);
+  expect(olInfo.hasLi).toBe(true);
+  expect(olInfo.liText).toContain('This is an editable section');
+});
+
+test('OL command creates a list on an empty line and typing adds text to the list', async ({ page }) => {
+  const baseUrl = 'http://localhost:47319';
+  await page.goto(baseUrl + '/phase2-js-editor/', { waitUntil: 'load' });
+  await page.waitForSelector('[data-block-id]', { timeout: 15000 });
+  await page.waitForTimeout(2000);
+  await page.click('[data-block-id="block-1"]', { timeout: 5000 });
+  await page.waitForTimeout(500);
+  await page.evaluate(() => {
+    const p = document.querySelector('[data-block-id="block-1"] p');
+    const range = document.createRange();
+    range.setEnd(p, p.childNodes.length);
+    range.collapse(false);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+  });
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(500);
+  const olButton = await page.$('.editor-toolbar button:nth-child(6)');
+  await olButton.click();
+  await page.waitForTimeout(500);
+  const olInfo = await page.evaluate(() => {
+    const block = document.querySelector('[data-block-id="block-1"]');
+    const ol = block.querySelector('ol');
+    const li = ol && ol.querySelector('li');
+    return { hasOl: ol !== null, hasLi: li !== null, liText: li ? li.textContent : null };
+  });
+  expect(olInfo.hasOl).toBe(true);
+  expect(olInfo.hasLi).toBe(true);
+  await page.type('[data-block-id="block-1"]', 'new item');
+  await page.waitForTimeout(500);
+  const afterType = await page.evaluate(() => {
+    const block = document.querySelector('[data-block-id="block-1"]');
+    const ol = block.querySelector('ol');
+    const lis = ol ? Array.from(ol.querySelectorAll('li')).map(li => li.textContent) : [];
+    return { hasOl: ol !== null, liTexts: lis };
+  });
+  expect(afterType.hasOl).toBe(true);
+  expect(afterType.liTexts).toEqual(['new item']);
+});
+
+test('UL command wraps selected text in unordered list', async ({ page }) => {
+  const baseUrl = 'http://localhost:47319';
+  await page.goto(baseUrl + '/phase2-js-editor/', { waitUntil: 'load' });
+  await page.waitForSelector('[data-block-id]', { timeout: 15000 });
+  await page.waitForTimeout(2000);
+  await page.click('[data-block-id="block-1"]', { timeout: 5000 });
+  await page.waitForTimeout(500);
+  await page.evaluate(() => {
+    const p = document.querySelector('[data-block-id="block-1"] p');
+    const range = document.createRange();
+    range.selectNodeContents(p);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+  });
+  const ulButton = await page.$('.editor-toolbar button:nth-child(5)');
+  await ulButton.click();
+  await page.waitForTimeout(500);
+  const ulInfo = await page.evaluate(() => {
+    const block = document.querySelector('[data-block-id="block-1"]');
+    const ul = block.querySelector('ul');
+    const li = ul && ul.querySelector('li');
+    return { hasUl: ul !== null, hasLi: li !== null, liText: li ? li.textContent : null };
+  });
+  expect(ulInfo.hasUl).toBe(true);
+  expect(ulInfo.hasLi).toBe(true);
+  expect(ulInfo.liText).toContain('This is an editable section');
+});
+
+test('OL command toggles a <ul> to <ol>', async ({ page }) => {
+  const baseUrl = 'http://localhost:47319';
+  await page.goto(baseUrl + '/phase2-js-editor/', { waitUntil: 'load' });
+  await page.waitForSelector('[data-block-id]', { timeout: 15000 });
+  await page.waitForTimeout(2000);
+  await page.click('[data-block-id="block-2"]', { timeout: 5000 });
+  await page.waitForTimeout(500);
+  await page.evaluate(() => {
+    const li = document.querySelector('[data-block-id="block-2"] ul li');
+    const range = document.createRange();
+    range.selectNodeContents(li);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+  });
+  const olButton = await page.$('.editor-toolbar button:nth-child(6)');
+  await olButton.click();
+  await page.waitForTimeout(500);
+  const olInfo = await page.evaluate(() => {
+    const block = document.querySelector('[data-block-id="block-2"]');
+    const ol = block.querySelector('ol');
+    const ul = block.querySelector('ul');
+    const li = ol && ol.querySelector('li');
+    return { hasOl: ol !== null, hasUl: ul !== null, liText: li ? li.textContent : null };
+  });
+  expect(olInfo.hasOl).toBe(true);
+  expect(olInfo.hasUl).toBe(false);
+  expect(olInfo.liText).toContain('First item');
 });
 
 test('link command fails when URL is empty', async ({ page }) => {

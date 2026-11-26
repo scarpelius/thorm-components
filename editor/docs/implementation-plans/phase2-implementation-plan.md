@@ -167,7 +167,7 @@ document structure for block-level ops).
 | `splitBlock` | Split the focused block at the current line index into two blocks (new block gets a generated id, type = focused block's type, order = focused order + 1) |
 | `mergeBlocks` | Merge the focused block with the next block (or with a selected set) into one; content concatenated |
 | `moveBlock` | Move the focused block up/down (or to a specified index) |
-| `insertBlock` | Insert a new empty block after the focused block |
+| `insertBlock` | Insert a new block: before the focused block ("Insert above"), inside the focused block at the cursor position ("Insert at cursor"), or after the focused block ("Insert below") |
 | `deleteBlock` | Remove the focused block from the document |
 
 **Implementation:**
@@ -264,7 +264,11 @@ document structure for block-level ops).
     { name: 'splitBlock', label: 'Split', icon: 'icon-split' },
     { name: 'mergeBlocks', label: 'Merge', icon: 'icon-merge' },
     { name: 'moveBlock', label: 'Move', icon: 'icon-move' },
-    { name: 'insertBlock', label: 'Insert Block', icon: 'icon-insert-block' },
+    { name: 'insertBlock', label: 'Insert Block', icon: 'icon-insert-block', dropdown: [
+      { name: 'insertBlock', label: 'Insert above', insertMode: 'above' },
+      { name: 'insertBlock', label: 'Insert at cursor', insertMode: 'cursor' },
+      { name: 'insertBlock', label: 'Insert below', insertMode: 'below' },
+    ] },
     { name: 'deleteBlock', label: 'Delete Block', icon: 'icon-delete-block' },
     { name: 'undo', label: 'Undo', icon: 'icon-undo' },
     { name: 'redo', label: 'Redo', icon: 'icon-redo' },

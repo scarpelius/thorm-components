@@ -20,7 +20,11 @@ export const DEFAULT_COMMANDS = [
   { name: 'splitBlock', label: 'Split', icon: 'icon-split' },
   { name: 'mergeBlocks', label: 'Merge', icon: 'icon-merge' },
   { name: 'moveBlock', label: 'Move', icon: 'icon-move' },
-  { name: 'insertBlock', label: 'Insert Block', icon: 'icon-insert-block' },
+  { name: 'insertBlock', label: 'Insert Block', icon: 'icon-insert-block', dropdown: [
+    { name: 'insertBlock', label: 'Insert above', insertMode: 'above' },
+    { name: 'insertBlock', label: 'Insert at cursor', insertMode: 'cursor' },
+    { name: 'insertBlock', label: 'Insert below', insertMode: 'below' },
+  ] },
   { name: 'deleteBlock', label: 'Delete Block', icon: 'icon-delete-block' },
   { name: 'undo', label: 'Undo', icon: 'icon-undo' },
   { name: 'redo', label: 'Redo', icon: 'icon-redo' },
@@ -44,6 +48,52 @@ export function showToolbar(blockEl) {
   toolbar.style.position = 'absolute';
 
   for (const cmd of DEFAULT_COMMANDS) {
+    // Dropdown commands render as a button + sub-menu instead of a flat button.
+    if (cmd.dropdown) {
+      const wrap = document.createElement('div');
+      wrap.className = 'editor-toolbar-dropdown';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.title = cmd.label;
+      btn.textContent = `${cmd.label} ▾`;
+      let savedRange = null;
+      btn.addEventListener('mousedown', (e) => {
+        // Save the selection on mousedown (before focus moves)
+        const selection = window.getSelection();
+        savedRange = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+      });
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const menu = wrap.querySelector('.editor-toolbar-dropdown-menu');
+        if (menu && menu.isConnected) {
+          menu.remove();
+        } else {
+          const menuEl = document.createElement('div');
+          menuEl.className = 'editor-toolbar-dropdown-menu';
+          for (const sub of cmd.dropdown) {
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.textContent = sub.label;
+            item.addEventListener('click', (ev) => {
+              ev.stopPropagation();
+              executeCommand(sub.name, {
+                blockId,
+                documentStructure: window.documentStructure,
+                selectionRange: savedRange,
+                insertMode: sub.insertMode,
+              });
+              menuEl.remove();
+            });
+            menuEl.appendChild(item);
+          }
+          wrap.appendChild(menuEl);
+        }
+      });
+      wrap.appendChild(btn);
+      toolbar.appendChild(wrap);
+      continue;
+    }
+
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.title = cmd.label;

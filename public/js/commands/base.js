@@ -380,8 +380,18 @@ export class Command {
    * @returns {number}
    */
   offsetInRange(el, container, offset) {
-    if (!el.contains(container)) return -1;
-    if (container === el) return offset;
+    if (!el.contains(container) && container !== el) return -1;
+    if (container === el) {
+      // When the container is the element itself, the offset is an index into
+      // el's childNodes, not a character offset. Convert it to the equivalent
+      // character offset by summing the text length of the children before
+      // that index.
+      let pos = 0;
+      for (let i = 0; i < offset && i < el.childNodes.length; i++) {
+        pos += el.childNodes[i].textContent.length;
+      }
+      return pos;
+    }
     let pos = 0;
     let node = container;
     while (node && node !== el) {
@@ -465,28 +475,71 @@ export class Command {
       // Fall through to the manual per-node approach.
     }
 
-    // Collect the selected nodes.
-    const nodes = [];
-    let node = range.startContainer;
-    const endNode = range.endContainer;
-    while (node && node !== endNode.parentElement) {
-      if (node.nodeType === 1) nodes.push(node);
-      node = node.nextSibling || node.parentElement;
+    // Manual fallback: handle multi-node selections by wrapping the selected
+    // text within each block-level element that the selection intersects.
+    // This avoids the complex node-collection walk that fails when the
+    // selection spans multiple sibling elements.
+    const blockLevelPattern = /^(h[1-6]|p|ul|ol|blockquote|pre|div)$/;
+    const commonAncestor = range.commonAncestorContainer;
+    if (!commonAncestor || commonAncestor.nodeType !== 1) return;
+
+    // Find all block-level children of the common ancestor that intersect
+    // the selection.
+    const children = Array.from(commonAncestor.children);
+    const targetElements = [];
+    for (const child of children) {
+      if (!blockLevelPattern.test(child.tagName.toLowerCase())) continue;
+      if (child.hasAttribute('data-block-id')) continue;
+      // Check if the selection intersects this child: the child contains
+      // the start container, or the end container, or the range's common
+      // ancestor is within the child.
+      const intersects =
+        child.contains(range.startContainer) ||
+        child.contains(range.endContainer);
+      if (intersects) {
+        targetElements.push(child);
+      }
     }
-    if (endNode.nodeType === 1) nodes.push(endNode);
-    if (nodes.length === 0) return;
+    if (targetElements.length === 0) return;
 
-    // Move each node into the wrapper.
-    nodes.forEach((n) => {
-      wrapper.appendChild(n);
-    });
+    // For each target element, wrap the selected portion within it.
+    for (const el of targetElements) {
+      const subRange = document.createRange();
+      const startContainer = range.startContainer;
+      const endContainer = range.endContainer;
 
-    // Insert the wrapper before the first node's original position.
-    const firstParent = nodes[0].parentElement;
-    if (firstParent) {
-      firstParent.insertBefore(wrapper, nodes[0]);
-    } else {
-      blockEl.appendChild(wrapper);
+      if (el.contains(startContainer)) {
+        subRange.setStart(startContainer, range.startOffset);
+      } else {
+        subRange.setStart(el, 0);
+      }
+
+      if (el.contains(endContainer)) {
+        subRange.setEnd(endContainer, range.endOffset);
+      } else {
+        subRange.setEnd(el, el.childNodes.length);
+      }
+
+      const subWrapper = document.createElement(tag);
+      try {
+        subRange.surroundContents(subWrapper);
+      } catch {
+        const sc = subRange.startContainer;
+        const ec = subRange.endContainer;
+        if (sc === ec && sc.nodeType === 3) {
+          const parent = sc.parentElement;
+          const text = sc.textContent;
+          const before = text.substring(0, subRange.startOffset);
+          const selected = text.substring(subRange.startOffset, subRange.endOffset);
+          const after = text.substring(subRange.endOffset);
+          const frag = document.createDocumentFragment();
+          if (before) frag.appendChild(document.createTextNode(before));
+          subWrapper.appendChild(document.createTextNode(selected));
+          frag.appendChild(subWrapper);
+          if (after) frag.appendChild(document.createTextNode(after));
+          parent.replaceChild(frag, sc);
+        }
+      }
     }
   }
 

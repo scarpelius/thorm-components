@@ -211,3 +211,123 @@ describe('link toggle', () => {
     assert.strictEqual(as[0].getAttribute('href'), 'https://example.com');
   });
 });
+
+// Select the entire contents of two sibling block-level elements (start of the
+// first, end of the last). Used for multi-line list tests.
+function selectTwoBlocks() {
+  const block = document.querySelector('[data-block-id="block-1"]');
+  const blocks = Array.from(block.children).filter((c) => c.nodeType === 1);
+  const first = blocks[0];
+  const last = blocks[blocks.length - 1];
+  const sel = window.getSelection();
+  const range = window.document.createRange();
+  range.setStart(first, 0);
+  range.setEnd(last, last.childNodes.length);
+  sel.removeAllRanges();
+  sel.addRange(range);
+  return range;
+}
+
+describe('UL command', () => {
+  test('wraps a single selected <p> in <ul>', () => {
+    resetBlock('<p>hello world</p>');
+    selectWholeP();
+    runCommand('ul', { blockId: 'block-1', selectionRange: window.getSelection().getRangeAt(0) });
+    const ul = document.querySelector('ul');
+    assert.notStrictEqual(ul, null);
+    const li = ul.querySelector('li');
+    assert.notStrictEqual(li, null);
+    assert.strictEqual(li.textContent, 'hello world');
+    assert.strictEqual(document.querySelector('p'), null);
+  });
+
+  test('wraps two selected <p> blocks in a single <ul>', () => {
+    resetBlock('<p>line one</p><p>line two</p>');
+    selectTwoBlocks();
+    runCommand('ul', { blockId: 'block-1', selectionRange: window.getSelection().getRangeAt(0) });
+    const ul = document.querySelector('ul');
+    assert.notStrictEqual(ul, null);
+    const lis = ul.querySelectorAll('li');
+    assert.strictEqual(lis.length, 2);
+    assert.strictEqual(lis[0].textContent, 'line one');
+    assert.strictEqual(lis[1].textContent, 'line two');
+    assert.strictEqual(document.querySelector('p'), null);
+  });
+
+  test('wraps only the selected middle blocks, leaving unselected blocks alone', () => {
+    resetBlock('<p>line one</p><p>line two</p><p>line three</p>');
+    // Select the middle and last blocks only.
+    const block = document.querySelector('[data-block-id="block-1"]');
+    const blocks = Array.from(block.children);
+    const sel = window.getSelection();
+    const range = window.document.createRange();
+    range.setStart(blocks[1], 0);
+    range.setEnd(blocks[2], blocks[2].childNodes.length);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    runCommand('ul', { blockId: 'block-1', selectionRange: window.getSelection().getRangeAt(0) });
+    const ul = document.querySelector('ul');
+    assert.notStrictEqual(ul, null);
+    const lis = ul.querySelectorAll('li');
+    assert.strictEqual(lis.length, 2);
+    assert.strictEqual(lis[0].textContent, 'line two');
+    assert.strictEqual(lis[1].textContent, 'line three');
+    // The first block is untouched.
+    const remainingP = document.querySelector('p');
+    assert.notStrictEqual(remainingP, null);
+    assert.strictEqual(remainingP.textContent, 'line one');
+  });
+});
+
+describe('OL command', () => {
+  test('wraps two selected <p> blocks in a single <ol>', () => {
+    resetBlock('<p>line one</p><p>line two</p>');
+    selectTwoBlocks();
+    runCommand('ol', { blockId: 'block-1', selectionRange: window.getSelection().getRangeAt(0) });
+    const ol = document.querySelector('ol');
+    assert.notStrictEqual(ol, null);
+    const lis = ol.querySelectorAll('li');
+    assert.strictEqual(lis.length, 2);
+    assert.strictEqual(lis[0].textContent, 'line one');
+    assert.strictEqual(lis[1].textContent, 'line two');
+    assert.strictEqual(document.querySelector('ul'), null);
+  });
+
+  test('toggles an existing <ul> to <ol>', () => {
+    resetBlock('<ul><li>first</li><li>second</li></ul>');
+    // Select the first list item.
+    const li = document.querySelector('li');
+    const sel = window.getSelection();
+    const range = window.document.createRange();
+    range.setStart(li, 0);
+    range.setEnd(li, li.childNodes.length);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    runCommand('ol', { blockId: 'block-1', selectionRange: window.getSelection().getRangeAt(0) });
+    const ol = document.querySelector('ol');
+    assert.notStrictEqual(ol, null);
+    assert.strictEqual(document.querySelector('ul'), null);
+    const lis = ol.querySelectorAll('li');
+    assert.strictEqual(lis.length, 2);
+    assert.strictEqual(lis[0].textContent, 'first');
+    assert.strictEqual(lis[1].textContent, 'second');
+  });
+
+  test('toggles an existing <ol> to <ul>', () => {
+    resetBlock('<ol><li>first</li><li>second</li></ol>');
+    const li = document.querySelector('li');
+    const sel = window.getSelection();
+    const range = window.document.createRange();
+    range.setStart(li, 0);
+    range.setEnd(li, li.childNodes.length);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    runCommand('ul', { blockId: 'block-1', selectionRange: window.getSelection().getRangeAt(0) });
+    const ul = document.querySelector('ul');
+    assert.notStrictEqual(ul, null);
+    assert.strictEqual(document.querySelector('ol'), null);
+    const lis = ul.querySelectorAll('li');
+    assert.strictEqual(lis.length, 2);
+    assert.strictEqual(lis[0].textContent, 'first');
+  });
+});

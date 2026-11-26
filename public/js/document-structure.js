@@ -122,12 +122,14 @@ export function applyStructuralChange(change, structure) {
     }
 
     case 'insertBlock': {
-      const { blockId, newBlockId, newType, newIR } = change;
+      const { blockId, newBlockId, newType, newIR, insertBefore } = change;
       const orderIdx = blockOrder.indexOf(blockId);
       if (orderIdx === -1) return structure;
 
       const newOrder = [...blockOrder];
-      newOrder.splice(orderIdx + 1, 0, newBlockId);
+      // Insert the new block before the current block when requested,
+      // otherwise after it.
+      newOrder.splice(insertBefore ? orderIdx : orderIdx + 1, 0, newBlockId);
 
       blocks.set(newBlockId, newIR);
       blockTypes.set(newBlockId, newType || 'section');

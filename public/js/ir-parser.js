@@ -93,6 +93,9 @@ function toTextIR(value) {
 
 function convertElementToIR(el) {
   if (SKIP_TAG_NAMES.has(el.tagName.toLowerCase())) return null;
+  // Skip nested blocks — they have their own IR stored separately and should
+  // not be serialized into the parent block's IR.
+  if (el.hasAttribute('data-block-id')) return null;
   const node = {
     id: idGenEl(),
     k: 'el',
